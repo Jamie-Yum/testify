@@ -3,1632 +3,1585 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TESTIFY — 시험 플랫폼</title>
+<title>TESTIFY — 시디즈 사내 시험 플랫폼</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  :root {
-    --bg: #0f0f0f;
-    --surface: #191919;
-    --surface2: #222222;
-    --border: #2e2e2e;
-    --accent: #d4f060;
-    --accent2: #60c4f0;
-    --accent3: #f06090;
-    --text: #f0ece4;
-    --text-muted: #888;
-    --text-dim: #555;
-    --radius: 12px;
-    --radius-sm: 8px;
-  }
+:root{
+  --bg:#0f0f0f;--surface:#191919;--surface2:#222;--surface3:#2a2a2a;
+  --border:#2e2e2e;--border2:#3a3a3a;
+  --accent:#d4f060;--accent2:#60c4f0;--accent3:#f06090;--accent4:#f0a060;
+  --text:#f0ece4;--muted:#888;--dim:#555;
+  --r:12px;--rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+/* ══ VIEWS ══ */
+.view{display:none;min-height:100vh;}
+.view.active{display:flex;flex-direction:column;}
+#view-landing,#view-intro,#view-exam-view,#view-result{align-items:center;justify-content:center;}
+#view-admin{flex-direction:row;}
 
-  body {
-    font-family: 'Pretendard', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    font-size: 14px;
-  }
+/* ══════════════════════════════════════
+   LANDING
+══════════════════════════════════════ */
+#view-landing{
+  background:var(--bg);position:relative;overflow:hidden;
+}
+#view-landing::before{
+  content:'';position:absolute;width:700px;height:700px;
+  background:radial-gradient(circle,rgba(212,240,96,.07) 0%,transparent 65%);
+  top:-200px;left:-100px;pointer-events:none;
+}
+#view-landing::after{
+  content:'';position:absolute;width:500px;height:500px;
+  background:radial-gradient(circle,rgba(96,196,240,.05) 0%,transparent 65%);
+  bottom:-100px;right:-50px;pointer-events:none;
+}
+.landing-inner{
+  text-align:center;position:relative;z-index:1;
+  animation:fadeUp .6s ease;
+}
+.landing-logo{
+  font-family:'DM Serif Display',serif;font-size:64px;letter-spacing:-3px;
+  color:var(--text);margin-bottom:10px;line-height:1;
+}
+.landing-logo span{color:var(--accent);}
+.landing-tagline{font-size:15px;color:var(--muted);font-weight:300;margin-bottom:12px;}
+.landing-sub{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--dim);margin-bottom:52px;
+}
+.landing-sub-dot{width:5px;height:5px;background:var(--accent);border-radius:50%;display:inline-block;}
 
-  /* ── VIEWS ── */
-  .view { display: none; min-height: 100vh; }
-  .view.active { display: flex; flex-direction: column; }
+.landing-cards{display:flex;gap:20px;justify-content:center;}
+.landing-card{
+  width:260px;background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:28px 24px;cursor:pointer;transition:all .25s;
+  position:relative;overflow:hidden;text-align:left;
+}
+.landing-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  transition:opacity .2s;opacity:0;
+}
+.landing-card.admin-card::before{background:var(--accent);}
+.landing-card.exam-card::before{background:var(--accent2);}
+.landing-card:hover{border-color:var(--border2);transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.4);}
+.landing-card:hover::before{opacity:1;}
+.lc-icon{font-size:28px;margin-bottom:16px;}
+.lc-title{font-size:17px;font-weight:700;margin-bottom:6px;letter-spacing:-.3px;}
+.lc-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+.lc-arrow{position:absolute;bottom:24px;right:24px;font-size:18px;color:var(--dim);transition:all .2s;}
+.landing-card:hover .lc-arrow{color:var(--text);transform:translateX(4px);}
 
-  /* ── LANDING ── */
-  #view-landing {
-    align-items: center;
-    justify-content: center;
-    background: var(--bg);
-    position: relative;
-    overflow: hidden;
-  }
-  #view-landing::before {
-    content: '';
-    position: absolute;
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(212,240,96,0.08) 0%, transparent 70%);
-    top: -100px; left: -100px;
-    pointer-events: none;
-  }
-  #view-landing::after {
-    content: '';
-    position: absolute;
-    width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(96,196,240,0.06) 0%, transparent 70%);
-    bottom: -50px; right: -50px;
-    pointer-events: none;
-  }
-  .landing-inner {
-    text-align: center;
-    position: relative;
-    z-index: 1;
-    animation: fadeUp 0.6s ease;
-  }
-  .logo-badge {
-    display: inline-block;
-    font-family: 'DM Serif Display', serif;
-    font-size: 56px;
-    letter-spacing: -2px;
-    color: var(--text);
-    margin-bottom: 12px;
-  }
-  .logo-badge span { color: var(--accent); }
-  .landing-sub {
-    color: var(--text-muted);
-    margin-bottom: 48px;
-    font-size: 15px;
-    font-weight: 300;
-  }
-  .landing-btns {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-  }
-  .btn-primary {
-    background: var(--accent);
-    color: #111;
-    border: none;
-    padding: 14px 28px;
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-family: 'Pretendard', sans-serif;
-    letter-spacing: 0.3px;
-  }
-  .btn-primary:hover { background: #c8e050; transform: translateY(-1px); }
-  .btn-outline {
-    background: transparent;
-    color: var(--text);
-    border: 1px solid var(--border);
-    padding: 14px 28px;
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-family: 'Pretendard', sans-serif;
-  }
-  .btn-outline:hover { border-color: var(--text-muted); }
+.landing-footer{
+  position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
+  font-size:11px;color:var(--dim);white-space:nowrap;
+}
 
-  /* ── ADMIN SHELL ── */
-  #view-admin {
-    flex-direction: row;
-  }
-  .sidebar {
-    width: 220px;
-    min-height: 100vh;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    padding: 24px 0;
-    flex-shrink: 0;
-  }
-  .sidebar-logo {
-    font-family: 'DM Serif Display', serif;
-    font-size: 22px;
-    padding: 0 20px 24px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 16px;
-    color: var(--text);
-  }
-  .sidebar-logo span { color: var(--accent); }
-  .sidebar-badge {
-    display: inline-block;
-    font-size: 10px;
-    font-family: 'Pretendard', sans-serif;
-    background: var(--surface2);
-    color: var(--text-muted);
-    padding: 2px 8px;
-    border-radius: 20px;
-    margin-left: 6px;
-    vertical-align: middle;
-  }
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 20px;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: all 0.15s;
-    font-size: 13.5px;
-    font-weight: 500;
-    border-left: 2px solid transparent;
-  }
-  .nav-item:hover { color: var(--text); background: var(--surface2); }
-  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(212,240,96,0.05); }
-  .nav-icon { width: 16px; text-align: center; }
-  .sidebar-footer {
-    margin-top: auto;
-    padding: 16px 20px;
-    border-top: 1px solid var(--border);
-  }
-  .sidebar-exit {
-    color: var(--text-muted);
-    font-size: 12px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .sidebar-exit:hover { color: var(--text); }
+/* ══════════════════════════════════════
+   ADMIN — LAYOUT
+══════════════════════════════════════ */
+.sidebar{
+  width:228px;background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;overflow-y:auto;z-index:10;
+}
+.main{flex:1;margin-left:228px;padding:32px 36px;min-height:100vh;}
 
-  .admin-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 32px 36px;
-  }
+.sb-logo{
+  font-family:'DM Serif Display',serif;font-size:20px;padding:22px 20px;
+  border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;
+}
+.sb-logo span{color:var(--accent);}
+.sb-badge{font-size:10px;font-family:'Pretendard',sans-serif;background:var(--surface2);color:var(--muted);padding:2px 8px;border-radius:20px;}
 
-  /* ── PANEL TABS ── */
-  .admin-panel { display: none; }
-  .admin-panel.active { display: block; animation: fadeUp 0.3s ease; }
+.nav-section{padding:16px 14px 6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--dim);}
+.nav-item{
+  display:flex;align-items:center;gap:9px;padding:9px 12px;margin:2px 8px;
+  color:var(--muted);cursor:pointer;border-radius:var(--rs);transition:all .15s;font-size:13.5px;font-weight:500;
+}
+.nav-item:hover{color:var(--text);background:var(--surface2);}
+.nav-item.active{color:var(--accent);background:rgba(212,240,96,.08);}
+.nav-icon{width:16px;text-align:center;font-size:13px;}
 
-  /* ── PAGE HEADER ── */
-  .page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 28px;
-  }
-  .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
-  .page-sub { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+/* 시험 / 설문 구분 뱃지 */
+.nav-item .type-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.dot-exam{background:var(--accent);}
+.dot-survey{background:var(--accent2);}
 
-  /* ── STAT CARDS ── */
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 28px;
-  }
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-  }
-  .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
-  .stat-value { font-size: 28px; font-weight: 700; font-family: 'DM Serif Display', serif; }
-  .stat-value.green { color: var(--accent); }
-  .stat-value.blue { color: var(--accent2); }
-  .stat-value.pink { color: var(--accent3); }
+.sb-footer{margin-top:auto;padding:14px 16px;border-top:1px solid var(--border);}
+.sb-back{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;cursor:pointer;transition:color .15s;}
+.sb-back:hover{color:var(--text);}
 
-  /* ── EXAM LIST ── */
-  .exam-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 16px;
-  }
-  .exam-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-  .exam-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: var(--accent);
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-  .exam-card:hover { border-color: #444; transform: translateY(-2px); }
-  .exam-card:hover::before { opacity: 1; }
-  .exam-card.survey::before { background: var(--accent2); }
-  .exam-card-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 12px;
-  }
-  .exam-title { font-size: 15px; font-weight: 600; }
-  .exam-badge {
-    font-size: 10px;
-    padding: 3px 9px;
-    border-radius: 20px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-  }
-  .badge-exam { background: rgba(212,240,96,0.15); color: var(--accent); }
-  .badge-survey { background: rgba(96,196,240,0.15); color: var(--accent2); }
-  .badge-live { background: rgba(240,96,144,0.15); color: var(--accent3); }
-  .badge-draft { background: rgba(255,255,255,0.06); color: var(--text-muted); }
-  .exam-meta {
-    display: flex;
-    gap: 16px;
-    font-size: 12px;
-    color: var(--text-muted);
-  }
-  .exam-meta-item { display: flex; align-items: center; gap: 4px; }
-  .add-exam-card {
-    border: 1px dashed var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-    min-height: 120px;
-    color: var(--text-muted);
-    font-size: 13px;
-  }
-  .add-exam-card:hover { border-color: var(--accent); color: var(--accent); background: rgba(212,240,96,0.03); }
-  .add-icon { font-size: 24px; }
+/* ══ PANELS ══ */
+.panel{display:none;animation:fadeUp .3s ease;}
+.panel.active{display:block;}
 
-  /* ── EXAM EDITOR ── */
-  .editor-tabs {
-    display: flex;
-    gap: 0;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 28px;
-  }
-  .editor-tab {
-    padding: 10px 20px;
-    font-size: 13px;
-    color: var(--text-muted);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.15s;
-    font-weight: 500;
-  }
-  .editor-tab:hover { color: var(--text); }
-  .editor-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+/* ══ PAGE HEADER ══ */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;}
+.ph-title{font-size:22px;font-weight:700;letter-spacing:-.5px;}
+.ph-sub{font-size:13px;color:var(--muted);margin-top:3px;}
 
-  .tab-content { display: none; }
-  .tab-content.active { display: block; animation: fadeUp 0.25s ease; }
+/* ══ BUTTONS ══ */
+.btn{padding:10px 20px;border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;
+  font-family:'Pretendard',sans-serif;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
+.btn-accent{background:var(--accent);color:#111;}
+.btn-accent:hover{background:#c8e050;}
+.btn-blue{background:var(--accent2);color:#111;}
+.btn-blue:hover{background:#4ab8e8;}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-outline:hover{color:var(--text);border-color:var(--border2);}
+.btn-danger{background:rgba(240,96,144,.15);color:var(--accent3);border:1px solid rgba(240,96,144,.2);}
+.btn-danger:hover{background:rgba(240,96,144,.25);}
+.btn-sm{padding:6px 14px;font-size:12px;}
+.btn-xs{padding:4px 10px;font-size:11px;}
 
-  /* ── FORM ELEMENTS ── */
-  .form-group { margin-bottom: 20px; }
-  .form-label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.7px;
-    margin-bottom: 8px;
-  }
-  .form-input {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 10px 14px;
-    color: var(--text);
-    font-size: 14px;
-    font-family: 'Pretendard', sans-serif;
-    transition: border-color 0.15s;
-    outline: none;
-  }
-  .form-input:focus { border-color: var(--accent); }
-  .form-input::placeholder { color: var(--text-dim); }
-  textarea.form-input { resize: vertical; min-height: 80px; }
+/* ══ STATS ══ */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+.stats-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
+.stat-val{font-size:26px;font-weight:700;font-family:'DM Serif Display',serif;}
+.c-accent{color:var(--accent);} .c-blue{color:var(--accent2);} .c-pink{color:var(--accent3);} .c-orange{color:var(--accent4);}
 
-  .toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .toggle-label { font-size: 14px; font-weight: 500; }
-  .toggle-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-  .toggle {
-    width: 40px; height: 22px;
-    background: var(--border);
-    border-radius: 11px;
-    cursor: pointer;
-    position: relative;
-    transition: background 0.2s;
-    border: none;
-    flex-shrink: 0;
-  }
-  .toggle::after {
-    content: '';
-    position: absolute;
-    width: 16px; height: 16px;
-    background: #fff;
-    border-radius: 50%;
-    top: 3px; left: 3px;
-    transition: transform 0.2s;
-  }
-  .toggle.on { background: var(--accent); }
-  .toggle.on::after { transform: translateX(18px); }
+/* ══ LIST TABS (시험/설문 분리) ══ */
+.list-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:24px;}
+.list-tab{
+  padding:10px 20px;font-size:13px;color:var(--muted);cursor:pointer;
+  border-bottom:2px solid transparent;transition:all .15s;font-weight:500;
+  display:flex;align-items:center;gap:7px;
+}
+.list-tab:hover{color:var(--text);}
+.list-tab.active-exam{color:var(--accent);border-bottom-color:var(--accent);}
+.list-tab.active-survey{color:var(--accent2);border-bottom-color:var(--accent2);}
+.list-tab-dot{width:7px;height:7px;border-radius:50%;}
+.list-tab-content{display:none;}
+.list-tab-content.active{display:block;animation:fadeUp .25s ease;}
 
-  .mode-select {
-    display: flex;
-    gap: 10px;
-  }
-  .mode-btn {
-    flex: 1;
-    padding: 10px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 13px;
-    font-family: 'Pretendard', sans-serif;
-    font-weight: 500;
-    transition: all 0.15s;
-    text-align: center;
-  }
-  .mode-btn.selected { border-color: var(--accent); color: var(--accent); background: rgba(212,240,96,0.07); }
+/* ══ EXAM CARDS ══ */
+.exam-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.exam-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px 20px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
+}
+.exam-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;opacity:0;transition:opacity .2s;}
+.exam-card.type-exam::before{background:var(--accent);}
+.exam-card.type-survey::before{background:var(--accent2);}
+.exam-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.exam-card:hover::before{opacity:1;}
+.ec-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px;}
+.ec-title{font-size:14px;font-weight:600;line-height:1.4;}
+.ec-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted);}
+.ec-actions{display:flex;gap:6px;margin-top:12px;opacity:0;transition:opacity .2s;}
+.exam-card:hover .ec-actions{opacity:1;}
+.add-card{
+  border:1px dashed var(--border);border-radius:var(--r);padding:18px 20px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;cursor:pointer;transition:all .2s;min-height:110px;color:var(--muted);font-size:13px;
+}
+.add-card:hover{border-color:var(--accent);color:var(--accent);background:rgba(212,240,96,.03);}
+.add-card.survey-add:hover{border-color:var(--accent2);color:var(--accent2);background:rgba(96,196,240,.03);}
 
-  /* ── QUESTION LIST ── */
-  .question-list { display: flex; flex-direction: column; gap: 12px; }
-  .question-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px 20px;
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-  }
-  .q-num {
-    width: 28px; height: 28px;
-    background: var(--surface2);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    flex-shrink: 0;
-    color: var(--text-muted);
-  }
-  .q-body { flex: 1; }
-  .q-text { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
-  .q-options { font-size: 12px; color: var(--text-muted); }
-  .q-type-badge {
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 20px;
-    background: var(--surface2);
-    color: var(--text-muted);
-    flex-shrink: 0;
-    align-self: flex-start;
-  }
-  .q-score { font-size: 12px; color: var(--text-muted); flex-shrink: 0; align-self: flex-start; }
+/* ══ BADGES ══ */
+.badge{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+.badge-live{background:rgba(240,96,144,.15);color:var(--accent3);}
+.badge-exam{background:rgba(212,240,96,.12);color:var(--accent);}
+.badge-survey{background:rgba(96,196,240,.12);color:var(--accent2);}
+.badge-draft{background:rgba(255,255,255,.06);color:var(--muted);}
+.badge-closed{background:rgba(255,255,255,.04);color:var(--dim);}
 
-  .add-question-row {
-    display: flex;
-    gap: 10px;
-    margin-top: 16px;
-  }
-  .type-btn {
-    flex: 1;
-    padding: 10px;
-    border: 1px dashed var(--border);
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 12px;
-    font-family: 'Pretendard', sans-serif;
-    transition: all 0.15s;
-    text-align: center;
-  }
-  .type-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(212,240,96,0.03); }
+/* ══ EDITOR TABS ══ */
+.etabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:28px;}
+.etab{padding:10px 18px;font-size:13px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;font-weight:500;}
+.etab:hover{color:var(--text);}
+.etab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.etab.active.survey-mode{color:var(--accent2);border-bottom-color:var(--accent2);}
+.tcontent{display:none;}
+.tcontent.active{display:block;animation:fadeUp .25s ease;}
 
-  /* ── SHARE TAB ── */
-  .share-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    margin-bottom: 16px;
-  }
-  .share-url {
-    font-size: 13px;
-    color: var(--accent2);
-    font-family: monospace;
-    background: var(--surface2);
-    padding: 10px 14px;
-    border-radius: var(--radius-sm);
-    margin: 10px 0;
-    word-break: break-all;
-  }
+/* ══ FORMS ══ */
+.fg{margin-bottom:18px;}
+.fl{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:7px;}
+.fi{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--rs);
+  padding:10px 13px;color:var(--text);font-size:14px;font-family:'Pretendard',sans-serif;outline:none;transition:border-color .15s;}
+.fi:focus{border-color:var(--accent);}
+.fi::placeholder{color:var(--dim);}
+textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
+.fi-sm{padding:7px 11px;font-size:13px;}
+.fi-inline{width:auto;display:inline-block;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
 
-  /* ── RESULTS TABLE ── */
-  .results-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .results-table th {
-    text-align: left;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.7px;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-  }
-  .results-table td {
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--border);
-    font-size: 13.5px;
-  }
-  .results-table tr:hover td { background: var(--surface2); }
-  .score-pill {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-  }
-  .score-high { background: rgba(212,240,96,0.15); color: var(--accent); }
-  .score-mid { background: rgba(96,196,240,0.15); color: var(--accent2); }
-  .score-low { background: rgba(240,96,144,0.15); color: var(--accent3); }
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border);}
+.tgl-label{font-size:14px;font-weight:500;}
+.tgl-desc{font-size:12px;color:var(--muted);margin-top:2px;}
+.tgl{width:38px;height:21px;background:var(--border);border-radius:11px;cursor:pointer;position:relative;transition:background .2s;border:none;flex-shrink:0;}
+.tgl::after{content:'';position:absolute;width:15px;height:15px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .2s;}
+.tgl.on{background:var(--accent);}
+.tgl.on::after{transform:translateX(17px);}
+.tgl.on.survey-tgl{background:var(--accent2);}
 
-  .detail-btn {
-    font-size: 12px;
-    color: var(--text-muted);
-    background: var(--surface2);
-    border: none;
-    padding: 5px 12px;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    font-family: 'Pretendard', sans-serif;
-    transition: all 0.15s;
-  }
-  .detail-btn:hover { color: var(--text); background: var(--border); }
+.mode-row{display:flex;gap:10px;}
+.mode-btn{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:var(--rs);background:transparent;color:var(--muted);cursor:pointer;font-size:13px;font-family:'Pretendard',sans-serif;font-weight:500;transition:all .15s;text-align:center;line-height:1.5;}
+.mode-btn.sel-exam{border-color:var(--accent);color:var(--accent);background:rgba(212,240,96,.07);}
+.mode-btn.sel-survey{border-color:var(--accent2);color:var(--accent2);background:rgba(96,196,240,.07);}
 
-  /* ── EXAMINEE VIEWS ── */
-  #view-intro, #view-exam, #view-result {
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-  }
+/* ══ QUESTION EDITOR ══ */
+.q-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+.q-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.q-item-header{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;user-select:none;}
+.q-item-header:hover{background:var(--surface2);}
+.q-drag{color:var(--dim);font-size:14px;}
+.q-num-b{width:26px;height:26px;background:var(--surface2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted);flex-shrink:0;}
+.q-preview{flex:1;font-size:13.5px;font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.q-type-tag{font-size:10px;padding:2px 8px;border-radius:20px;background:var(--surface2);color:var(--muted);flex-shrink:0;}
+.q-score-tag{font-size:12px;color:var(--muted);flex-shrink:0;}
+.q-chevron{color:var(--muted);font-size:12px;transition:transform .2s;flex-shrink:0;}
+.q-item.open .q-chevron{transform:rotate(180deg);}
+.q-body{display:none;padding:16px;border-top:1px solid var(--border);background:var(--surface2);}
+.q-item.open .q-body{display:block;}
 
-  #view-intro {
-    background: var(--bg);
-  }
+.options-editor{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+.opt-row{display:flex;align-items:center;gap:8px;}
+.opt-label{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0;cursor:pointer;transition:all .15s;}
+.opt-label.correct{border-color:var(--accent);color:var(--accent);background:rgba(212,240,96,.1);}
 
-  .intro-card {
-    width: 520px;
-    max-width: 95vw;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 40px;
-    animation: fadeUp 0.5s ease;
-  }
-  .intro-mode-tag {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--accent);
-    background: rgba(212,240,96,0.1);
-    padding: 4px 12px;
-    border-radius: 20px;
-    margin-bottom: 16px;
-  }
-  .intro-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 28px;
-    margin-bottom: 10px;
-    letter-spacing: -0.5px;
-  }
-  .intro-desc { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 24px; }
-  .intro-meta {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    background: var(--surface2);
-    border-radius: var(--radius-sm);
-    padding: 16px;
-    margin-bottom: 24px;
-  }
-  .intro-meta-item { }
-  .intro-meta-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 4px; }
-  .intro-meta-value { font-size: 15px; font-weight: 600; }
-  .intro-divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+.add-q-bar{display:flex;gap:8px;flex-wrap:wrap;}
+.add-q-btn{padding:8px 14px;border:1px dashed var(--border);border-radius:var(--rs);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-family:'Pretendard',sans-serif;transition:all .15s;}
+.add-q-btn:hover{border-color:var(--accent);color:var(--accent);}
+.add-q-btn.survey-btn:hover{border-color:var(--accent2);color:var(--accent2);}
 
-  /* ── EXAM VIEW ── */
-  #view-exam { background: var(--bg); }
+/* ══ EXCEL ══ */
+.drop-zone{border:2px dashed var(--border);border-radius:var(--r);padding:32px;text-align:center;cursor:pointer;transition:all .2s;color:var(--muted);}
+.drop-zone:hover,.drop-zone.over{border-color:var(--accent);color:var(--accent);background:rgba(212,240,96,.03);}
+.drop-icon{font-size:28px;margin-bottom:8px;}
+.preview-table-wrap{overflow-x:auto;margin-top:16px;border-radius:var(--rs);border:1px solid var(--border);}
+.preview-table{width:100%;border-collapse:collapse;font-size:12px;}
+.preview-table th{background:var(--surface2);padding:8px 12px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);border-bottom:1px solid var(--border);}
+.preview-table td{padding:8px 12px;border-bottom:1px solid var(--border);}
+.preview-table tr:last-child td{border-bottom:none;}
 
-  .exam-shell {
-    width: 680px;
-    max-width: 95vw;
-    animation: fadeUp 0.4s ease;
-  }
-  .exam-topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 0;
-    margin-bottom: 24px;
-    border-bottom: 1px solid var(--border);
-  }
-  .exam-progress-info { font-size: 13px; color: var(--text-muted); }
-  .exam-progress-info strong { color: var(--text); }
-  .timer-display {
-    font-size: 18px;
-    font-weight: 700;
-    font-family: 'DM Serif Display', serif;
-    color: var(--accent);
-    background: rgba(212,240,96,0.08);
-    padding: 6px 16px;
-    border-radius: var(--radius-sm);
-    letter-spacing: 2px;
-  }
-  .timer-display.warning { color: var(--accent3); background: rgba(240,96,144,0.08); }
-  .progress-bar-wrap {
-    height: 3px;
-    background: var(--surface2);
-    border-radius: 2px;
-    margin-bottom: 32px;
-    overflow: hidden;
-  }
-  .progress-bar-fill {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 2px;
-    transition: width 0.4s ease;
-  }
-  .question-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 32px;
-    margin-bottom: 20px;
-  }
-  .q-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-  .q-number {
-    width: 32px; height: 32px;
-    background: var(--accent);
-    color: #111;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 800;
-  }
-  .q-type-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
-  .q-score-label { margin-left: auto; font-size: 12px; color: var(--text-muted); }
-  .question-text { font-size: 17px; font-weight: 600; line-height: 1.5; margin-bottom: 24px; }
+/* ══ SHARE ══ */
+.share-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:14px;}
+.share-url{font-size:12px;color:var(--accent2);font-family:monospace;background:var(--surface2);padding:9px 13px;border-radius:var(--rs);margin:10px 0;word-break:break-all;}
 
-  .options-list { display: flex; flex-direction: column; gap: 10px; }
-  .option-btn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    font-size: 14px;
-    font-family: 'Pretendard', sans-serif;
-    color: var(--text);
-    text-align: left;
-    transition: all 0.15s;
-    width: 100%;
-  }
-  .option-btn:hover { border-color: #555; background: #2a2a2a; }
-  .option-btn.selected { border-color: var(--accent); background: rgba(212,240,96,0.07); color: var(--accent); }
-  .option-num {
-    width: 24px; height: 24px;
-    border-radius: 50%;
-    border: 1.5px solid currentColor;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 700;
-    flex-shrink: 0;
-    opacity: 0.6;
-  }
-  .option-btn.selected .option-num { opacity: 1; background: var(--accent); color: #111; border-color: var(--accent); }
+/* ══ RESULTS TABLE ══ */
+.rtable-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--border);}
+.rtable{width:100%;border-collapse:collapse;}
+.rtable th{background:var(--surface2);padding:10px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);border-bottom:1px solid var(--border);}
+.rtable td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13.5px;}
+.rtable tr:last-child td{border-bottom:none;}
+.rtable tr:hover td{background:var(--surface2);}
+.spill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;}
+.sp-hi{background:rgba(212,240,96,.15);color:var(--accent);}
+.sp-mid{background:rgba(96,196,240,.15);color:var(--accent2);}
+.sp-lo{background:rgba(240,96,144,.15);color:var(--accent3);}
+.sp-pend{background:rgba(240,160,96,.12);color:var(--accent4);}
 
-  .ox-btns {
-    display: flex;
-    gap: 12px;
-  }
-  .ox-btn {
-    flex: 1;
-    padding: 20px;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--surface2);
-    color: var(--text);
-    font-size: 28px;
-    cursor: pointer;
-    text-align: center;
-    transition: all 0.15s;
-    font-family: 'DM Serif Display', serif;
-  }
-  .ox-btn:hover { border-color: #555; }
-  .ox-btn.selected-o { border-color: var(--accent); background: rgba(212,240,96,0.07); }
-  .ox-btn.selected-x { border-color: var(--accent3); background: rgba(240,96,144,0.07); }
+/* ══ PROGRESS ══ */
+.progress-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+.progress-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;}
+.pc-name{font-size:14px;font-weight:600;margin-bottom:8px;}
+.pc-bar-wrap{height:6px;background:var(--surface2);border-radius:3px;margin-bottom:6px;overflow:hidden;}
+.pc-bar{height:100%;background:var(--accent);border-radius:3px;transition:width .5s ease;}
+.pc-meta{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;}
 
-  .short-input {
-    width: 100%;
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 12px 16px;
-    color: var(--text);
-    font-size: 14px;
-    font-family: 'Pretendard', sans-serif;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  .short-input:focus { border-color: var(--accent); }
-  .short-input::placeholder { color: var(--text-dim); }
+/* ══ NOTICE / UTIL ══ */
+.notice{background:rgba(212,240,96,.05);border:1px solid rgba(212,240,96,.15);border-radius:var(--rs);padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;}
+.notice strong{color:var(--text);}
+.notice.survey-notice{background:rgba(96,196,240,.05);border-color:rgba(96,196,240,.15);}
+.sec-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px;}
+.divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
+.flex{display:flex;} .items-center{align-items:center;} .justify-between{justify-content:space-between;}
+.gap-8{gap:8px;} .gap-10{gap:10px;} .gap-12{gap:12px;}
+.mt-12{margin-top:12px;} .mt-16{margin-top:16px;} .mt-20{margin-top:20px;} .mt-24{margin-top:24px;}
+.mb-12{margin-bottom:12px;} .mb-16{margin-bottom:16px;} .mb-20{margin-bottom:20px;}
 
-  .essay-area {
-    width: 100%;
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 14px 16px;
-    color: var(--text);
-    font-size: 14px;
-    font-family: 'Pretendard', sans-serif;
-    outline: none;
-    resize: vertical;
-    min-height: 120px;
-    transition: border-color 0.15s;
-    line-height: 1.6;
-  }
-  .essay-area:focus { border-color: var(--accent); }
-  .essay-area::placeholder { color: var(--text-dim); }
+/* ══════════════════════════════════════
+   INTRO (응시자)
+══════════════════════════════════════ */
+#view-intro{background:var(--bg);position:relative;overflow:hidden;}
+#view-intro::before{content:'';position:absolute;width:500px;height:500px;
+  background:radial-gradient(circle,rgba(212,240,96,.06) 0%,transparent 70%);
+  top:-80px;right:-80px;pointer-events:none;}
 
-  .nav-btns {
-    display: flex;
-    gap: 12px;
-    justify-content: space-between;
-  }
-  .btn-nav {
-    padding: 12px 24px;
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: 'Pretendard', sans-serif;
-    transition: all 0.15s;
-  }
-  .btn-prev { background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted); }
-  .btn-prev:hover { color: var(--text); }
-  .btn-next { background: var(--accent); border: none; color: #111; }
-  .btn-next:hover { background: #c8e050; }
-  .btn-submit { background: var(--accent3); border: none; color: #fff; }
-  .btn-submit:hover { background: #e0507a; }
+.intro-card{width:520px;max-width:95vw;background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:40px;position:relative;z-index:1;animation:fadeUp .5s ease;}
+.intro-card.survey-card{border-color:rgba(96,196,240,.2);}
+.platform-tag{display:flex;align-items:center;gap:6px;margin-bottom:20px;font-size:12px;color:var(--muted);}
+.platform-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;}
+.platform-dot.survey{background:var(--accent2);}
+.mode-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--accent);background:rgba(212,240,96,.1);padding:4px 12px;border-radius:20px;margin-bottom:14px;}
+.mode-tag.survey{color:var(--accent2);background:rgba(96,196,240,.1);}
+.intro-title{font-family:'DM Serif Display',serif;font-size:26px;margin-bottom:10px;letter-spacing:-.5px;line-height:1.3;}
+.intro-desc{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:22px;}
+.intro-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:var(--surface2);border-radius:var(--rs);padding:16px;margin-bottom:20px;}
+.im-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px;}
+.im-val{font-size:15px;font-weight:600;}
+.im-val.accent{color:var(--accent);}
+.im-val.blue{color:var(--accent2);}
+.intro-notice{background:rgba(212,240,96,.05);border:1px solid rgba(212,240,96,.15);border-radius:var(--rs);padding:13px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:22px;}
+.intro-notice.survey-notice{background:rgba(96,196,240,.05);border-color:rgba(96,196,240,.15);}
+.intro-notice strong{color:var(--text);}
+.intro-fi{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--rs);padding:11px 14px;color:var(--text);font-size:14px;font-family:'Pretendard',sans-serif;outline:none;transition:border-color .15s;}
+.intro-fi:focus{border-color:var(--accent);}
+.intro-fi.survey-fi:focus{border-color:var(--accent2);}
+.intro-fi::placeholder{color:var(--dim);}
+.err{color:var(--accent3);font-size:12px;margin-top:6px;display:none;}
+.err.show{display:block;}
+.btn-start{width:100%;background:var(--accent);color:#111;border:none;padding:14px;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Pretendard',sans-serif;}
+.btn-start:hover{background:#c8e050;transform:translateY(-1px);}
+.btn-start.survey-start{background:var(--accent2);}
+.btn-start.survey-start:hover{background:#4ab8e8;}
 
-  /* ── RESULT VIEW ── */
-  #view-result { background: var(--bg); }
+/* ══════════════════════════════════════
+   EXAM VIEW
+══════════════════════════════════════ */
+#view-exam-view{background:var(--bg);padding:0;}
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(15,15,15,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:50;}
+.tb-logo{font-family:'DM Serif Display',serif;font-size:16px;color:var(--muted);}
+.tb-logo span{color:var(--accent);}
+.tb-logo span.survey{color:var(--accent2);}
+.tb-center{font-size:13px;color:var(--muted);}
+.tb-center strong{color:var(--text);}
+.timer{font-size:16px;font-weight:700;font-family:'DM Serif Display',serif;color:var(--accent);background:rgba(212,240,96,.08);padding:5px 14px;border-radius:var(--rs);letter-spacing:2px;transition:all .3s;}
+.timer.warn{color:var(--accent3);background:rgba(240,96,144,.1);animation:pulse 1s infinite;}
+.timer.notime{opacity:0;pointer-events:none;}
 
-  .result-card {
-    width: 580px;
-    max-width: 95vw;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 40px;
-    animation: fadeUp 0.5s ease;
-  }
-  .result-score-ring {
-    width: 120px; height: 120px;
-    margin: 0 auto 24px;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-  }
-  .result-score-ring svg {
-    position: absolute;
-    top: 0; left: 0;
-    transform: rotate(-90deg);
-  }
-  .result-score-num {
-    font-family: 'DM Serif Display', serif;
-    font-size: 32px;
-    color: var(--accent);
-    position: relative;
-    z-index: 1;
-    line-height: 1;
-  }
-  .result-score-total {
-    font-size: 12px;
-    color: var(--text-muted);
-    position: relative;
-    z-index: 1;
-  }
-  .result-title { text-align: center; font-size: 18px; font-weight: 700; margin-bottom: 6px; }
-  .result-sub { text-align: center; font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
+.prog-bar-wrap{position:fixed;top:56px;left:0;right:0;height:3px;background:var(--surface2);z-index:50;}
+.prog-bar{height:100%;background:var(--accent);transition:width .4s ease;}
+.prog-bar.survey{background:var(--accent2);}
 
-  .answer-review { display: flex; flex-direction: column; gap: 10px; }
-  .answer-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 12px 14px;
-    background: var(--surface2);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-  }
-  .answer-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; margin-top: 2px; }
-  .correct { background: rgba(212,240,96,0.2); color: var(--accent); }
-  .incorrect { background: rgba(240,96,144,0.2); color: var(--accent3); }
-  .answer-text { font-size: 13px; }
-  .answer-q { font-weight: 500; margin-bottom: 3px; }
-  .answer-detail { font-size: 12px; color: var(--text-muted); }
-  .answer-correct { color: var(--accent); }
+.exam-body{padding-top:80px;padding-bottom:100px;display:flex;flex-direction:column;align-items:center;min-height:100vh;}
+.exam-shell{width:640px;max-width:95vw;padding:32px 0;}
 
-  /* ── MODAL ── */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(4px);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 28px;
-    width: 480px;
-    max-width: 95vw;
-    animation: fadeUp 0.25s ease;
-  }
-  .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
-  .modal-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
-  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-  .btn-sm {
-    padding: 9px 18px;
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: 'Pretendard', sans-serif;
-    border: none;
-  }
-  .btn-sm-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
-  .btn-sm-outline:hover { color: var(--text); }
-  .btn-sm-accent { background: var(--accent); color: #111; }
-  .btn-sm-accent:hover { background: #c8e050; }
+.q-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:32px;animation:fadeUp .3s ease;}
+.q-header{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.q-num-badge{width:30px;height:30px;background:var(--accent);color:#111;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;}
+.q-num-badge.survey{background:var(--accent2);}
+.q-type-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;}
+.q-score-lbl{margin-left:auto;font-size:12px;color:var(--muted);background:var(--surface2);padding:3px 10px;border-radius:20px;}
+.q-text{font-size:17px;font-weight:600;line-height:1.55;margin-bottom:24px;user-select:none;-webkit-user-select:none;cursor:default;}
 
-  /* ── UTILS ── */
-  .flex { display: flex; }
-  .items-center { align-items: center; }
-  .justify-between { justify-content: space-between; }
-  .gap-10 { gap: 10px; }
-  .mt-16 { margin-top: 16px; }
-  .mt-24 { margin-top: 24px; }
-  .text-muted { color: var(--text-muted); }
-  .text-accent { color: var(--accent); }
-  .fw-600 { font-weight: 600; }
-  .fs-13 { font-size: 13px; }
+.opts{display:flex;flex-direction:column;gap:10px;}
+.opt{display:flex;align-items:center;gap:12px;padding:13px 16px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--rs);cursor:pointer;font-size:14px;font-family:'Pretendard',sans-serif;color:var(--text);text-align:left;transition:all .15s;width:100%;user-select:none;-webkit-user-select:none;}
+.opt:hover{border-color:#555;background:#252525;}
+.opt.sel{border-color:var(--accent);background:rgba(212,240,96,.07);}
+.opt.sel.survey{border-color:var(--accent2);background:rgba(96,196,240,.07);}
+.opt-n{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:var(--muted);transition:all .15s;}
+.opt.sel .opt-n{background:var(--accent);color:#111;border-color:var(--accent);}
+.opt.sel.survey .opt-n{background:var(--accent2);border-color:var(--accent2);}
 
-  .section-label {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--text-muted);
-    margin-bottom: 14px;
-  }
+.ox-wrap{display:flex;gap:12px;}
+.ox-btn{flex:1;padding:24px;border:1.5px solid var(--border);border-radius:var(--r);background:var(--surface2);color:var(--muted);font-size:36px;cursor:pointer;text-align:center;transition:all .15s;line-height:1;user-select:none;}
+.ox-btn:hover{border-color:#555;color:var(--text);}
+.ox-btn.o{border-color:var(--accent);background:rgba(212,240,96,.07);color:var(--accent);}
+.ox-btn.x{border-color:var(--accent3);background:rgba(240,96,144,.07);color:var(--accent3);}
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+.short-inp{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--rs);padding:13px 16px;color:var(--text);font-size:15px;font-family:'Pretendard',sans-serif;outline:none;transition:border-color .15s;}
+.short-inp:focus{border-color:var(--accent);}
+.short-inp.survey:focus{border-color:var(--accent2);}
+.short-inp::placeholder{color:var(--dim);}
 
-  .notice-box {
-    background: rgba(212,240,96,0.06);
-    border: 1px solid rgba(212,240,96,0.2);
-    border-radius: var(--radius-sm);
-    padding: 12px 16px;
-    font-size: 13px;
-    color: var(--text-muted);
-    line-height: 1.6;
-  }
-  .notice-box strong { color: var(--accent); }
+.essay-area{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--rs);padding:14px 16px;color:var(--text);font-size:14px;font-family:'Pretendard',sans-serif;outline:none;resize:vertical;min-height:140px;transition:border-color .15s;line-height:1.7;}
+.essay-area:focus{border-color:var(--accent);}
+.essay-area.survey:focus{border-color:var(--accent2);}
+.essay-area::placeholder{color:var(--dim);}
+.essay-cnt{font-size:11px;color:var(--dim);text-align:right;margin-top:6px;}
 
-  .excel-drop {
-    border: 2px dashed var(--border);
-    border-radius: var(--radius);
-    padding: 32px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    color: var(--text-muted);
-    font-size: 13px;
-  }
-  .excel-drop:hover { border-color: var(--accent); color: var(--accent); background: rgba(212,240,96,0.03); }
-  .excel-drop-icon { font-size: 28px; margin-bottom: 8px; }
+/* scale rating (설문) */
+.scale-wrap{display:flex;gap:8px;justify-content:space-between;align-items:center;}
+.scale-label{font-size:12px;color:var(--muted);white-space:nowrap;}
+.scale-btns{display:flex;gap:6px;flex:1;justify-content:center;}
+.scale-btn{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;font-family:'Pretendard',sans-serif;}
+.scale-btn:hover{border-color:#555;color:var(--text);}
+.scale-btn.sel{border-color:var(--accent2);background:rgba(96,196,240,.1);color:var(--accent2);}
+
+/* 하단 footer */
+.exam-footer{position:fixed;bottom:0;left:0;right:0;background:rgba(15,15,15,.95);backdrop-filter:blur(8px);border-top:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;z-index:50;}
+.footer-dots{display:flex;gap:6px;flex-wrap:wrap;max-width:60%;}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--border);transition:all .2s;cursor:pointer;}
+.dot.answered{background:var(--accent);}
+.dot.answered.survey{background:var(--accent2);}
+.dot.current{background:var(--accent);outline:2px solid rgba(212,240,96,.35);outline-offset:1px;}
+.dot.current.survey{background:var(--accent2);outline-color:rgba(96,196,240,.35);}
+.dot.warn-dot{background:var(--accent3);}
+
+.footer-btns{display:flex;gap:10px;}
+.btn-nav{padding:10px 22px;border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;font-family:'Pretendard',sans-serif;transition:all .15s;border:none;}
+.btn-prev{background:var(--surface2);border:1px solid var(--border);color:var(--muted);}
+.btn-prev:hover{color:var(--text);}
+.btn-next-exam{background:var(--accent);color:#111;}
+.btn-next-exam:hover{background:#c8e050;}
+.btn-next-survey{background:var(--accent2);color:#111;}
+.btn-next-survey:hover{background:#4ab8e8;}
+.btn-submit-btn{background:var(--accent3);color:#fff;}
+.btn-submit-btn:hover{background:#e0507a;}
+
+/* ══════════════════════════════════════
+   RESULT
+══════════════════════════════════════ */
+#view-result{background:var(--bg);position:relative;overflow:hidden;}
+#view-result::before{content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(212,240,96,.05) 0%,transparent 70%);top:-200px;left:50%;transform:translateX(-50%);pointer-events:none;}
+#view-result.survey-result::before{background:radial-gradient(circle,rgba(96,196,240,.05) 0%,transparent 70%);}
+
+.result-card{width:560px;max-width:95vw;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px;position:relative;z-index:1;animation:fadeUp .5s ease;}
+.result-top{text-align:center;margin-bottom:28px;}
+.score-ring{width:130px;height:130px;margin:0 auto 18px;position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column;}
+.score-ring svg{position:absolute;top:0;left:0;transform:rotate(-90deg);}
+.score-num{font-family:'DM Serif Display',serif;font-size:36px;color:var(--accent);position:relative;z-index:1;line-height:1;}
+.score-num.survey{color:var(--accent2);}
+.score-total{font-size:12px;color:var(--muted);position:relative;z-index:1;margin-top:2px;}
+.result-grade{font-size:20px;font-weight:700;margin-bottom:4px;}
+.result-name-lbl{font-size:13px;color:var(--muted);}
+.result-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:var(--surface2);border-radius:var(--rs);padding:16px;margin-bottom:22px;}
+.rs-item{text-align:center;}
+.rs-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px;}
+.rs-val{font-size:18px;font-weight:700;}
+.review-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px;}
+.answer-list{display:flex;flex-direction:column;gap:8px;}
+.ans-item{display:flex;align-items:flex-start;gap:12px;padding:13px 14px;background:var(--surface2);border-radius:var(--rs);border:1px solid var(--border);}
+.ans-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px;}
+.ic-ok{background:rgba(212,240,96,.18);color:var(--accent);}
+.ic-ng{background:rgba(240,96,144,.18);color:var(--accent3);}
+.ic-pend{background:rgba(96,196,240,.18);color:var(--accent2);}
+.ic-sub{background:rgba(255,255,255,.07);color:var(--muted);}
+.ans-body{flex:1;}
+.ans-q{font-size:13px;font-weight:500;margin-bottom:4px;line-height:1.4;}
+.ans-detail{font-size:12px;color:var(--muted);}
+.ans-correct{color:var(--accent);}
+.result-footer-msg{margin-top:20px;text-align:center;font-size:12px;color:var(--dim);}
+
+/* ══ MODAL ══ */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;width:460px;max-width:95vw;animation:fadeUp .25s ease;}
+.modal-sm{width:380px;text-align:center;}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:6px;}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+.mbtn{flex:1;padding:11px;border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;font-family:'Pretendard',sans-serif;border:none;transition:all .15s;}
+.mbtn-cancel{background:var(--surface2);color:var(--muted);border:1px solid var(--border);}
+.mbtn-cancel:hover{color:var(--text);}
+.mbtn-confirm{background:var(--accent3);color:#fff;}
+.mbtn-confirm:hover{background:#e0507a;}
+.ai-box{background:rgba(212,240,96,.05);border:1px solid rgba(212,240,96,.18);border-radius:var(--rs);padding:14px;margin-bottom:14px;}
+.ai-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);margin-bottom:8px;}
+.warn-modal{background:var(--surface);border:1px solid rgba(240,96,144,.3);border-radius:14px;padding:28px;width:400px;max-width:95vw;animation:fadeUp .25s ease;text-align:center;}
+.warn-count{display:inline-block;background:rgba(240,96,144,.15);color:var(--accent3);font-size:24px;font-weight:700;font-family:'DM Serif Display',serif;padding:8px 20px;border-radius:var(--rs);margin:8px 0 16px;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+@media print{body::after{content:"이 시험은 인쇄할 수 없습니다.";position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:24px;z-index:9999;}.view{display:none!important;}}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════
+<!-- ══════════════════════════════════════
      LANDING
-═══════════════════════════════════════════ -->
+══════════════════════════════════════ -->
 <div id="view-landing" class="view active">
   <div class="landing-inner">
-    <div class="logo-badge">TEST<span>IFY</span></div>
-    <p class="landing-sub">사내 시험 & 설문 플랫폼 — 출제부터 결과 분석까지</p>
-    <div class="landing-btns">
-      <button class="btn-primary" onclick="goAdmin()">관리자로 입장</button>
-      <button class="btn-outline" onclick="goIntro()">응시자로 입장</button>
+    <div class="landing-logo">TEST<span>IFY</span></div>
+    <div class="landing-tagline">시디즈 사내 시험 & 설문 플랫폼</div>
+    <div class="landing-sub"><span class="landing-sub-dot"></span>출제부터 결과 분석까지</div>
+    <div class="landing-cards">
+      <div class="landing-card admin-card" onclick="goAdmin()">
+        <div class="lc-icon">🛠</div>
+        <div class="lc-title">관리자 입장</div>
+        <div class="lc-desc">시험·설문을 만들고<br>결과를 분석합니다</div>
+        <div class="lc-arrow">→</div>
+      </div>
+      <div class="landing-card exam-card" onclick="goExaminee()">
+        <div class="lc-icon">📝</div>
+        <div class="lc-title">시험 · 설문 응시</div>
+        <div class="lc-desc">링크를 받았다면<br>여기서 입장하세요</div>
+        <div class="lc-arrow">→</div>
+      </div>
     </div>
   </div>
+  <div class="landing-footer">TESTIFY © 2025 Sidiz — 사내 전용</div>
 </div>
 
-<!-- ═══════════════════════════════════════════
+<!-- ══════════════════════════════════════
      ADMIN
-═══════════════════════════════════════════ -->
+══════════════════════════════════════ -->
 <div id="view-admin" class="view">
   <nav class="sidebar">
-    <div class="sidebar-logo">TEST<span>IFY</span> <span class="sidebar-badge">관리자</span></div>
-    <div class="nav-item active" onclick="showAdminPanel('dashboard', this)">
-      <span class="nav-icon">◈</span> 대시보드
+    <div class="sb-logo">TEST<span>IFY</span> <span class="sb-badge">관리자</span></div>
+    <div class="nav-section">메인</div>
+    <div class="nav-item active" data-panel="dashboard"><span class="nav-icon">◈</span>대시보드</div>
+
+    <div class="nav-section">시험 관리</div>
+    <div class="nav-item" data-panel="exam-list">
+      <span class="nav-icon">▦</span>시험 목록
+      <span class="type-dot dot-exam" style="margin-left:auto;"></span>
     </div>
-    <div class="nav-item" onclick="showAdminPanel('exams', this)">
-      <span class="nav-icon">▦</span> 시험 목록
+    <div class="nav-item" data-panel="survey-list">
+      <span class="nav-icon">◫</span>설문 목록
+      <span class="type-dot dot-survey" style="margin-left:auto;"></span>
     </div>
-    <div class="nav-item" onclick="showAdminPanel('editor', this)">
-      <span class="nav-icon">✏</span> 시험 편집
-    </div>
-    <div class="nav-item" onclick="showAdminPanel('results', this)">
-      <span class="nav-icon">◉</span> 결과 분석
-    </div>
-    <div class="sidebar-footer">
-      <div class="sidebar-exit" onclick="goLanding()">← 메인으로</div>
+    <div class="nav-item" data-panel="editor"><span class="nav-icon">✏</span>편집기</div>
+
+    <div class="nav-section">결과</div>
+    <div class="nav-item" data-panel="results"><span class="nav-icon">◉</span>결과 분석</div>
+    <div class="nav-item" data-panel="progress"><span class="nav-icon">↗</span>응시자 진도</div>
+
+    <div class="sb-footer">
+      <div class="sb-back" onclick="goLanding()">← 메인으로</div>
     </div>
   </nav>
 
-  <div class="admin-content">
+  <main class="main">
 
-    <!-- 대시보드 -->
-    <div id="panel-dashboard" class="admin-panel active">
-      <div class="page-header">
-        <div>
-          <div class="page-title">대시보드</div>
-          <div class="page-sub">전체 시험 현황을 한눈에 확인하세요</div>
-        </div>
-        <button class="btn-primary" onclick="showAdminPanel('editor', document.querySelectorAll('.nav-item')[2])">+ 새 시험 만들기</button>
-      </div>
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-label">전체 시험</div>
-          <div class="stat-value">5</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">진행 중</div>
-          <div class="stat-value green">2</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">총 응시자</div>
-          <div class="stat-value blue">47</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">평균 점수</div>
-          <div class="stat-value pink">78점</div>
+    <!-- DASHBOARD -->
+    <div id="panel-dashboard" class="panel active">
+      <div class="ph">
+        <div><div class="ph-title">대시보드</div><div class="ph-sub">전체 현황</div></div>
+        <div class="flex gap-10">
+          <button class="btn btn-outline" onclick="openNewModal('survey')">＋ 새 설문</button>
+          <button class="btn btn-accent" onclick="openNewModal('exam')">＋ 새 시험</button>
         </div>
       </div>
-      <div class="section-label">최근 시험</div>
-      <div class="exam-grid">
-        <div class="exam-card" onclick="showAdminPanel('editor', document.querySelectorAll('.nav-item')[2])">
-          <div class="exam-card-header">
-            <div class="exam-title">2월 제품 교육 평가</div>
-            <span class="exam-badge badge-live">진행중</span>
-          </div>
-          <div class="exam-meta">
-            <span class="exam-meta-item">📋 객관식 외 20문항</span>
-            <span class="exam-meta-item">⏱ 30분</span>
-            <span class="exam-meta-item">👤 12명 응시</span>
-          </div>
-        </div>
-        <div class="exam-card survey" onclick="showAdminPanel('results', document.querySelectorAll('.nav-item')[3])">
-          <div class="exam-card-header">
-            <div class="exam-title">신입 OJT 만족도 조사</div>
-            <span class="exam-badge badge-survey">설문</span>
-          </div>
-          <div class="exam-meta">
-            <span class="exam-meta-item">📋 10문항</span>
-            <span class="exam-meta-item">👤 35명 응시</span>
-          </div>
-        </div>
-        <div class="exam-card">
-          <div class="exam-card-header">
-            <div class="exam-title">안전 교육 이해도 테스트</div>
-            <span class="exam-badge badge-draft">임시저장</span>
-          </div>
-          <div class="exam-meta">
-            <span class="exam-meta-item">📋 15문항</span>
-            <span class="exam-meta-item">⏱ 20분</span>
-          </div>
-        </div>
-        <div class="add-exam-card" onclick="showAdminPanel('editor', document.querySelectorAll('.nav-item')[2])">
-          <div class="add-icon">＋</div>
-          <div>새 시험 / 설문 만들기</div>
-        </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-label">전체 시험</div><div class="stat-val c-accent" id="stat-exam-cnt">0</div></div>
+        <div class="stat"><div class="stat-label">전체 설문</div><div class="stat-val c-blue" id="stat-survey-cnt">0</div></div>
+        <div class="stat"><div class="stat-label">총 응시자</div><div class="stat-val">47</div></div>
+        <div class="stat"><div class="stat-label">평균 점수</div><div class="stat-val c-pink">78점</div></div>
       </div>
+
+      <!-- 최근 시험 -->
+      <div class="flex justify-between items-center mb-12">
+        <div class="sec-label" style="margin-bottom:0;">최근 시험</div>
+        <span style="font-size:12px;color:var(--muted);cursor:pointer;" onclick="nav('exam-list')">전체보기 →</span>
+      </div>
+      <div class="exam-grid mb-20" id="dash-exam-grid"></div>
+
+      <!-- 최근 설문 -->
+      <div class="flex justify-between items-center mb-12">
+        <div class="sec-label" style="margin-bottom:0;">최근 설문</div>
+        <span style="font-size:12px;color:var(--muted);cursor:pointer;" onclick="nav('survey-list')">전체보기 →</span>
+      </div>
+      <div class="exam-grid" id="dash-survey-grid"></div>
     </div>
 
-    <!-- 시험 목록 -->
-    <div id="panel-exams" class="admin-panel">
-      <div class="page-header">
-        <div>
-          <div class="page-title">시험 목록</div>
-          <div class="page-sub">생성된 모든 시험과 설문을 관리합니다</div>
-        </div>
-        <button class="btn-primary" onclick="showAdminPanel('editor', document.querySelectorAll('.nav-item')[2])">+ 새 시험 만들기</button>
+    <!-- EXAM LIST -->
+    <div id="panel-exam-list" class="panel">
+      <div class="ph">
+        <div><div class="ph-title">시험 목록</div><div class="ph-sub">채점·결과가 있는 시험</div></div>
+        <button class="btn btn-accent" onclick="openNewModal('exam')">＋ 새 시험 만들기</button>
       </div>
-      <div class="exam-grid">
-        <div class="exam-card" onclick="showAdminPanel('editor', document.querySelectorAll('.nav-item')[2])">
-          <div class="exam-card-header">
-            <div class="exam-title">2월 제품 교육 평가</div>
-            <span class="exam-badge badge-live">진행중</span>
-          </div>
-          <div class="exam-meta">
-            <span class="exam-meta-item">📋 20문항</span>
-            <span class="exam-meta-item">⏱ 30분</span>
-            <span class="exam-meta-item">👤 12명</span>
-          </div>
-        </div>
-        <div class="exam-card survey">
-          <div class="exam-card-header">
-            <div class="exam-title">신입 OJT 만족도 조사</div>
-            <span class="exam-badge badge-survey">설문</span>
-          </div>
-          <div class="exam-meta">
-            <span class="exam-meta-item">📋 10문항</span>
-            <span class="exam-meta-item">👤 35명</span>
-          </div>
-        </div>
-        <div class="exam-card">
-          <div class="exam-card-header">
-            <div class="exam-title">안전 교육 이해도 테스트</div>
-            <span class="exam-badge badge-draft">임시저장</span>
-          </div>
-          <div class="exam-meta">
-            <span class="exam-meta-item">📋 15문항</span>
-            <span class="exam-meta-item">⏱ 20분</span>
-          </div>
-        </div>
-        <div class="exam-card">
-          <div class="exam-card-header">
-            <div class="exam-title">상반기 CS 역량 평가</div>
-            <span class="exam-badge badge-exam">시험</span>
-          </div>
-          <div class="exam-meta">
-            <span class="exam-meta-item">📋 25문항</span>
-            <span class="exam-meta-item">⏱ 40분</span>
-            <span class="exam-meta-item">👤 0명</span>
-          </div>
-        </div>
-        <div class="add-exam-card" onclick="showAdminPanel('editor', document.querySelectorAll('.nav-item')[2])">
-          <div class="add-icon">＋</div>
-          <div>새 시험 / 설문 만들기</div>
-        </div>
-      </div>
+      <div class="exam-grid" id="list-exam-grid"></div>
     </div>
 
-    <!-- 시험 편집 -->
-    <div id="panel-editor" class="admin-panel">
-      <div class="page-header">
+    <!-- SURVEY LIST -->
+    <div id="panel-survey-list" class="panel">
+      <div class="ph">
+        <div><div class="ph-title">설문 목록</div><div class="ph-sub">자유 응답 수집 설문</div></div>
+        <button class="btn btn-blue" onclick="openNewModal('survey')">＋ 새 설문 만들기</button>
+      </div>
+      <div class="exam-grid" id="list-survey-grid"></div>
+    </div>
+
+    <!-- EDITOR -->
+    <div id="panel-editor" class="panel">
+      <div class="ph">
         <div>
-          <div class="page-title">시험 편집</div>
-          <div class="page-sub">2월 제품 교육 평가</div>
+          <div class="ph-title" id="editor-title">새로 만들기</div>
+          <div class="ph-sub" id="editor-sub">설정을 입력하세요</div>
         </div>
         <div class="flex gap-10">
-          <button class="btn-outline" style="padding:10px 18px;font-size:13px;">임시저장</button>
-          <button class="btn-primary">시험 배포</button>
+          <button class="btn btn-outline" onclick="saveItem(true)">임시저장</button>
+          <button class="btn btn-accent" id="btn-deploy" onclick="saveItem(false)">저장 & 배포</button>
+        </div>
+      </div>
+      <div class="etabs">
+        <div class="etab active" data-tab="basic">⚙ 기본 설정</div>
+        <div class="etab" data-tab="questions">📝 문항 편집</div>
+        <div class="etab" data-tab="excel">📥 엑셀 업로드</div>
+        <div class="etab" data-tab="share">🔗 공유</div>
+      </div>
+
+      <!-- 기본 설정 -->
+      <div id="tab-basic" class="tcontent active">
+        <div style="max-width:580px;">
+          <div class="fg">
+            <label class="fl">유형</label>
+            <div class="mode-row">
+              <button class="mode-btn" id="mode-exam-btn" onclick="setEditorMode('exam')">📝 시험 모드<br><small style="opacity:.6;font-size:11px;">정답·채점 있음</small></button>
+              <button class="mode-btn" id="mode-survey-btn" onclick="setEditorMode('survey')">📊 설문 모드<br><small style="opacity:.6;font-size:11px;">자유 응답 수집</small></button>
+            </div>
+          </div>
+          <div class="two-col">
+            <div class="fg"><label class="fl">제목</label><input class="fi" id="f-title" placeholder="예: 2월 제품 교육 평가" /></div>
+            <div class="fg"><label class="fl">응시 비밀번호 (없으면 공개)</label><input class="fi" id="f-pw" placeholder="예: SIDIZ25" /></div>
+          </div>
+          <div class="fg"><label class="fl">안내 문구</label><textarea class="fi" id="f-desc" placeholder="응시자에게 보여줄 안내 문구"></textarea></div>
+          <div class="two-col">
+            <div class="fg"><label class="fl">시간 제한 (분, 0=무제한)</label><input class="fi" id="f-time" type="number" value="30" /></div>
+            <div class="fg"><label class="fl">랜덤 출제 문항 수 (0=전체)</label><input class="fi" id="f-random" type="number" value="0" /></div>
+          </div>
+          <div class="toggle-row"><div><div class="tgl-label">결과 즉시 공개</div><div class="tgl-desc">제출 후 응시자에게 점수와 정오표 표시</div></div><button class="tgl on" id="tgl-result" onclick="this.classList.toggle('on')"></button></div>
+          <div class="toggle-row"><div><div class="tgl-label">재시험 허용</div><div class="tgl-desc">동일 링크로 재응시 가능</div></div><button class="tgl" id="tgl-retake" onclick="this.classList.toggle('on')"></button></div>
+          <div class="toggle-row" id="tgl-row-shuffle"><div><div class="tgl-label">보기 순서 랜덤</div><div class="tgl-desc">객관식 보기를 응시자마다 다르게 섞기</div></div><button class="tgl on" id="tgl-shuffle" onclick="this.classList.toggle('on')"></button></div>
+          <div class="toggle-row"><div><div class="tgl-label">문제 순서 랜덤</div><div class="tgl-desc">응시자마다 문제 순서 다르게</div></div><button class="tgl" id="tgl-qshuffle" onclick="this.classList.toggle('on')"></button></div>
         </div>
       </div>
 
-      <div class="editor-tabs">
-        <div class="editor-tab active" onclick="showEditorTab('basic', this)">⚙ 기본 설정</div>
-        <div class="editor-tab" onclick="showEditorTab('questions', this)">📝 문제 편집</div>
-        <div class="editor-tab" onclick="showEditorTab('share', this)">🔗 공유</div>
-      </div>
-
-      <!-- 기본 설정 탭 -->
-      <div id="tab-basic" class="tab-content active">
-        <div style="max-width: 560px;">
-          <div class="form-group">
-            <label class="form-label">시험 / 설문 모드</label>
-            <div class="mode-select">
-              <button class="mode-btn selected" onclick="selectMode(this)">📝 시험 모드<br><span style="font-size:11px;opacity:0.6;">정답·채점 있음</span></button>
-              <button class="mode-btn" onclick="selectMode(this)">📊 설문 모드<br><span style="font-size:11px;opacity:0.6;">자유 응답 수집</span></button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">시험명</label>
-            <input class="form-input" type="text" value="2월 제품 교육 평가" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">안내 문구</label>
-            <textarea class="form-input">본 시험은 2월 제품 교육 내용을 바탕으로 구성되었습니다. 시험 시작 전 안내 사항을 꼭 확인해주세요. 총 20문항, 100점 만점입니다.</textarea>
-          </div>
-          <div class="form-group">
-            <label class="form-label">시간 제한 (분, 0 = 제한 없음)</label>
-            <input class="form-input" type="number" value="30" style="width:120px;" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">랜덤 출제</label>
-            <div class="flex items-center gap-10">
-              <button class="toggle on" onclick="this.classList.toggle('on')"></button>
-              <span class="fs-13 text-muted">문제 풀에서</span>
-              <input class="form-input" type="number" value="10" style="width:70px;" />
-              <span class="fs-13 text-muted">개 랜덤 출제</span>
-            </div>
-          </div>
-          <div class="toggle-row">
-            <div>
-              <div class="toggle-label">이름 + 비밀번호 인증</div>
-              <div class="toggle-desc">응시자가 이름과 비밀번호를 입력해야 입장 가능</div>
-            </div>
-            <button class="toggle on" onclick="this.classList.toggle('on')"></button>
-          </div>
-          <div class="toggle-row">
-            <div>
-              <div class="toggle-label">결과 즉시 공개</div>
-              <div class="toggle-desc">제출 후 응시자에게 점수와 정오표를 바로 보여줌</div>
-            </div>
-            <button class="toggle on" onclick="this.classList.toggle('on')"></button>
-          </div>
-          <div class="toggle-row">
-            <div>
-              <div class="toggle-label">문제 순서 랜덤</div>
-              <div class="toggle-desc">응시자마다 문제 순서를 다르게 섞어서 출제</div>
-            </div>
-            <button class="toggle" onclick="this.classList.toggle('on')"></button>
-          </div>
-          <div class="toggle-row">
-            <div>
-              <div class="toggle-label">보기 순서 랜덤</div>
-              <div class="toggle-desc">객관식 보기 순서도 랜덤으로 섞기</div>
-            </div>
-            <button class="toggle" onclick="this.classList.toggle('on')"></button>
-          </div>
+      <!-- 문항 편집 -->
+      <div id="tab-questions" class="tcontent">
+        <div class="flex justify-between items-center mb-16">
+          <div class="sec-label" style="margin-bottom:0;">문항 목록 (<span id="q-count">0</span>문항)</div>
+        </div>
+        <div class="q-list" id="q-list"></div>
+        <div class="add-q-bar mt-12" id="add-q-bar">
+          <button class="add-q-btn" onclick="addQ('multiple')">＋ 객관식</button>
+          <button class="add-q-btn" onclick="addQ('ox')">＋ OX</button>
+          <button class="add-q-btn" onclick="addQ('short')">＋ 단답형</button>
+          <button class="add-q-btn" onclick="addQ('essay')">＋ 서술형</button>
+          <button class="add-q-btn survey-btn" id="btn-add-scale" onclick="addQ('scale')" style="display:none;">＋ 척도 (1~5)</button>
         </div>
       </div>
 
-      <!-- 문제 편집 탭 -->
-      <div id="tab-questions" class="tab-content">
-        <div class="flex justify-between items-center" style="margin-bottom:20px;">
-          <div class="section-label" style="margin-bottom:0;">문항 목록 (4문항)</div>
-          <div class="flex gap-10">
-            <div class="excel-drop" style="padding:8px 16px;border-style:dashed;font-size:12px;" onclick="alert('엑셀 업로드: 파일 선택 후 문제가 자동으로 등록됩니다.\n\n지원 컬럼: type, question, option_1~4, answer, model_answer, score, explanation')">
-              📥 엑셀 업로드
-            </div>
-          </div>
+      <!-- 엑셀 업로드 -->
+      <div id="tab-excel" class="tcontent">
+        <div class="notice mb-16">
+          <strong>엑셀 양식 안내</strong><br>
+          컬럼: <code style="font-family:monospace;color:var(--accent2);">type | question | option_1~4 | answer | model_answer | score | explanation</code><br>
+          <span style="font-size:12px;">type: 객관식 / OX / 단답형 / 서술형 / 척도 &nbsp;|&nbsp; 복수정답: "1,3"</span>
         </div>
-        <div class="question-list">
-          <div class="question-item">
-            <div class="q-num">1</div>
-            <div class="q-body">
-              <div class="q-text">다음 중 시디즈 T90 의자의 메시 소재 특징으로 올바른 것은?</div>
-              <div class="q-options">① 통기성이 우수하다 &nbsp; ② 세탁이 가능하다 &nbsp; ③ 열에 강하다 &nbsp; ④ 방수 기능이 있다</div>
-            </div>
-            <span class="q-type-badge">객관식</span>
-            <span class="q-score">10점</span>
-          </div>
-          <div class="question-item">
-            <div class="q-num">2</div>
-            <div class="q-body">
-              <div class="q-text">틸팅 기능은 등받이가 앞뒤로 기울어지는 기능이다.</div>
-              <div class="q-options">정답: O</div>
-            </div>
-            <span class="q-type-badge">OX</span>
-            <span class="q-score">10점</span>
-          </div>
-          <div class="question-item">
-            <div class="q-num">3</div>
-            <div class="q-body">
-              <div class="q-text">좌판 깊이 조절 기능을 영어로 무엇이라고 하나요?</div>
-              <div class="q-options">단답형</div>
-            </div>
-            <span class="q-type-badge">단답형</span>
-            <span class="q-score">10점</span>
-          </div>
-          <div class="question-item">
-            <div class="q-num">4</div>
-            <div class="q-body">
-              <div class="q-text">고객이 허리 통증을 호소할 때 어떤 기능을 추천하고 그 이유를 설명하시오.</div>
-              <div class="q-options">서술형 — AI 채점 보조 활성화</div>
-            </div>
-            <span class="q-type-badge">서술형</span>
-            <span class="q-score">20점</span>
-          </div>
+        <div class="drop-zone" id="drop-zone"
+          onclick="document.getElementById('excel-input').click()"
+          ondragover="event.preventDefault();this.classList.add('over')"
+          ondragleave="this.classList.remove('over')"
+          ondrop="handleDrop(event)">
+          <div class="drop-icon">📥</div>
+          <div>클릭하거나 파일을 드래그해서 업로드</div>
+          <div style="font-size:12px;color:var(--dim);margin-top:6px;">.xlsx 파일만 지원</div>
         </div>
-
-        <div class="add-question-row">
-          <button class="type-btn" onclick="alert('객관식 문제 추가 편집기가 열립니다.')">＋ 객관식</button>
-          <button class="type-btn" onclick="alert('OX 문제 추가 편집기가 열립니다.')">＋ OX</button>
-          <button class="type-btn" onclick="alert('단답형 문제 추가 편집기가 열립니다.')">＋ 단답형</button>
-          <button class="type-btn" onclick="alert('서술형 문제 추가 편집기가 열립니다.')">＋ 서술형</button>
-        </div>
-
-        <div class="notice-box mt-24">
-          <strong>엑셀 업로드 양식 안내</strong><br>
-          컬럼 순서: type | question | option_1 | option_2 | option_3 | option_4 | answer | model_answer | score | explanation<br>
-          <span style="font-size:11px;margin-top:4px;display:block;">서술형은 answer 빈칸, model_answer에 모범답안 작성 / 복수 정답은 "1,3" 형태</span>
+        <input type="file" id="excel-input" accept=".xlsx" style="display:none" onchange="handleExcel(this.files[0])">
+        <div id="excel-preview"></div>
+        <div id="excel-btn-row" style="display:none;margin-top:14px;">
+          <button class="btn btn-accent" onclick="importExcel()">문항으로 가져오기</button>
         </div>
       </div>
 
-      <!-- 공유 탭 -->
-      <div id="tab-share" class="tab-content">
-        <div style="max-width: 560px;">
+      <!-- 공유 -->
+      <div id="tab-share" class="tcontent">
+        <div style="max-width:560px;">
           <div class="share-card">
             <div class="flex justify-between items-center">
-              <div class="fw-600">응시자 링크</div>
+              <div style="font-weight:600;">응시자 링크</div>
               <div class="flex gap-10">
-                <span class="exam-badge badge-live">진행중</span>
-                <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+                <span class="badge badge-live" id="share-status-badge">진행중</span>
+                <button class="tgl on" id="tgl-live" onclick="this.classList.toggle('on');updateShareStatus()"></button>
               </div>
             </div>
-            <div class="share-url">https://testify.sidiz.com/test/FEB2025-PROD</div>
-            <button class="btn-sm btn-sm-accent" onclick="alert('링크가 복사되었습니다!')">링크 복사</button>
+            <div class="share-url" id="share-url-exam">testify.sidiz.com/test/——</div>
+            <button class="btn btn-sm btn-accent" onclick="copyShareUrl('exam')">링크 복사</button>
           </div>
           <div class="share-card">
-            <div class="fw-600" style="margin-bottom:6px;">관리자(출제자) 전용 링크</div>
-            <div class="fs-13 text-muted" style="margin-bottom:10px;">이 URL을 아는 사람만 시험을 관리할 수 있습니다</div>
-            <div class="share-url">https://testify.sidiz.com/admin/FEB2025-PROD</div>
-            <button class="btn-sm btn-sm-outline" onclick="alert('관리자 링크가 복사되었습니다!')">링크 복사</button>
+            <div style="font-weight:600;margin-bottom:4px;">관리자 전용 링크</div>
+            <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">이 URL을 아는 사람만 관리할 수 있습니다</div>
+            <div class="share-url" id="share-url-admin">testify.sidiz.com/admin/——</div>
+            <button class="btn btn-sm btn-outline" onclick="copyShareUrl('admin')">링크 복사</button>
           </div>
-          <div class="notice-box">
-            <strong>응시 비밀번호</strong>: <span style="font-family:monospace;font-size:15px;">SIDIZ25</span><br>
-            <span style="font-size:12px;">응시자가 이름과 함께 입력해야 시험에 입장할 수 있습니다.</span>
-          </div>
+          <div class="notice"><strong>응시 비밀번호</strong>: <span id="share-pw-display" style="font-family:monospace;font-size:15px;">——</span><br><span style="font-size:12px;">설정하지 않으면 링크만으로 입장 가능합니다.</span></div>
         </div>
       </div>
     </div>
 
-    <!-- 결과 분석 -->
-    <div id="panel-results" class="admin-panel">
-      <div class="page-header">
-        <div>
-          <div class="page-title">결과 분석</div>
-          <div class="page-sub">2월 제품 교육 평가 — 응시자 12명</div>
-        </div>
-        <button class="btn-primary" onclick="alert('결과 엑셀 파일이 다운로드됩니다.')">📥 엑셀 다운로드</button>
+    <!-- RESULTS -->
+    <div id="panel-results" class="panel">
+      <div class="ph">
+        <div><div class="ph-title">결과 분석</div><div class="ph-sub">2월 제품 교육 평가 — 응시자 4명</div></div>
+        <button class="btn btn-accent" onclick="downloadResultExcel()">📥 엑셀 다운로드</button>
       </div>
-      <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
-        <div class="stat-card">
-          <div class="stat-label">평균 점수</div>
-          <div class="stat-value green">78점</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">최고 점수</div>
-          <div class="stat-value blue">95점</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">최저 점수</div>
-          <div class="stat-value pink">55점</div>
-        </div>
+      <div class="stats-3 mb-16">
+        <div class="stat"><div class="stat-label">평균 점수</div><div class="stat-val c-accent">78점</div></div>
+        <div class="stat"><div class="stat-label">최고 점수</div><div class="stat-val c-blue">95점</div></div>
+        <div class="stat"><div class="stat-label">최저 점수</div><div class="stat-val c-pink">55점</div></div>
       </div>
-      <table class="results-table">
-        <thead>
-          <tr>
-            <th>이름</th>
-            <th>제출 시간</th>
-            <th>소요 시간</th>
-            <th>점수</th>
-            <th>서술형</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="fw-600">김민지</td>
-            <td class="text-muted">14:23</td>
-            <td class="text-muted">22분</td>
-            <td><span class="score-pill score-high">95점</span></td>
-            <td><span class="score-pill score-mid">채점 대기</span></td>
-            <td><button class="detail-btn" onclick="openGradingModal()">채점하기</button></td>
-          </tr>
-          <tr>
-            <td class="fw-600">이준혁</td>
-            <td class="text-muted">14:31</td>
-            <td class="text-muted">28분</td>
-            <td><span class="score-pill score-high">88점</span></td>
-            <td><span class="score-pill score-high">채점 완료</span></td>
-            <td><button class="detail-btn">상세보기</button></td>
-          </tr>
-          <tr>
-            <td class="fw-600">박서연</td>
-            <td class="text-muted">14:18</td>
-            <td class="text-muted">18분</td>
-            <td><span class="score-pill score-mid">72점</span></td>
-            <td><span class="score-pill score-mid">채점 대기</span></td>
-            <td><button class="detail-btn" onclick="openGradingModal()">채점하기</button></td>
-          </tr>
-          <tr>
-            <td class="fw-600">최동우</td>
-            <td class="text-muted">14:45</td>
-            <td class="text-muted">⏱ 시간초과</td>
-            <td><span class="score-pill score-low">55점</span></td>
-            <td><span class="score-pill score-mid">채점 대기</span></td>
-            <td><button class="detail-btn" onclick="openGradingModal()">채점하기</button></td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="rtable-wrap">
+        <table class="rtable">
+          <thead><tr><th>이름</th><th>제출 시각</th><th>소요 시간</th><th>점수</th><th>서술형</th><th></th></tr></thead>
+          <tbody>
+            <tr><td style="font-weight:600;">김민지</td><td style="color:var(--muted);">14:23</td><td style="color:var(--muted);">22분</td><td><span class="spill sp-hi">95점</span></td><td><span class="spill sp-pend">채점 대기</span></td><td><button class="btn btn-xs btn-outline" onclick="openGrading('김민지')">채점하기</button></td></tr>
+            <tr><td style="font-weight:600;">이준혁</td><td style="color:var(--muted);">14:31</td><td style="color:var(--muted);">28분</td><td><span class="spill sp-hi">88점</span></td><td><span class="spill sp-hi">채점 완료</span></td><td><button class="btn btn-xs btn-outline">상세보기</button></td></tr>
+            <tr><td style="font-weight:600;">박서연</td><td style="color:var(--muted);">14:18</td><td style="color:var(--muted);">18분</td><td><span class="spill sp-mid">72점</span></td><td><span class="spill sp-pend">채점 대기</span></td><td><button class="btn btn-xs btn-outline" onclick="openGrading('박서연')">채점하기</button></td></tr>
+            <tr><td style="font-weight:600;">최동우</td><td style="color:var(--muted);">14:45</td><td style="color:var(--accent3);">⏱ 시간초과</td><td><span class="spill sp-lo">55점</span></td><td><span class="spill sp-pend">채점 대기</span></td><td><button class="btn btn-xs btn-outline" onclick="openGrading('최동우')">채점하기</button></td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-  </div>
+    <!-- PROGRESS -->
+    <div id="panel-progress" class="panel">
+      <div class="ph">
+        <div><div class="ph-title">응시자 진도</div><div class="ph-sub">실시간 응시 현황</div></div>
+        <button class="btn btn-outline" onclick="alert('Supabase 연동 후 실시간 업데이트됩니다.')">↻ 새로고침</button>
+      </div>
+      <div class="notice mb-16">실시간 진도는 Supabase 연동 후 자동 업데이트됩니다. 현재는 샘플 데이터입니다.</div>
+      <div class="progress-grid">
+        <div class="progress-card"><div class="pc-name">김민지</div><div class="pc-bar-wrap"><div class="pc-bar" style="width:75%"></div></div><div class="pc-meta"><span>15 / 20 문항</span><span style="color:var(--accent);">진행 중</span></div></div>
+        <div class="progress-card"><div class="pc-name">이준혁</div><div class="pc-bar-wrap"><div class="pc-bar" style="width:100%"></div></div><div class="pc-meta"><span>20 / 20 문항</span><span style="color:var(--muted);">제출 완료</span></div></div>
+        <div class="progress-card"><div class="pc-name">박서연</div><div class="pc-bar-wrap"><div class="pc-bar" style="width:40%"></div></div><div class="pc-meta"><span>8 / 20 문항</span><span style="color:var(--accent);">진행 중</span></div></div>
+        <div class="progress-card"><div class="pc-name">최동우</div><div class="pc-bar-wrap"><div class="pc-bar" style="width:0%"></div></div><div class="pc-meta"><span>미접속</span><span style="color:var(--dim);">대기 중</span></div></div>
+      </div>
+    </div>
+  </main>
 </div>
 
-<!-- AI 채점 모달 -->
-<div id="grading-modal" class="modal-overlay">
-  <div class="modal">
-    <div class="modal-title">서술형 채점 — 김민지</div>
-    <div class="modal-sub">Q4. 고객이 허리 통증을 호소할 때 어떤 기능을 추천하고 그 이유를 설명하시오.</div>
-    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;font-size:13px;line-height:1.7;margin-bottom:16px;">
-      "허리 통증 고객에게는 요추지지대(럼버 서포트)와 좌판 틸팅 잠금 기능을 추천합니다. 요추지지대는 허리의 자연스러운 S자 곡선을 유지해주고, 틸팅 잠금으로 앉은 자세를 고정할 수 있어 통증 완화에 도움이 됩니다."
-    </div>
-    <div style="background:rgba(212,240,96,0.06);border:1px solid rgba(212,240,96,0.2);border-radius:var(--radius-sm);padding:14px;font-size:13px;line-height:1.7;margin-bottom:16px;">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--accent);margin-bottom:8px;">🤖 AI 분석 결과</div>
-      <div>모범답안과 <strong style="color:var(--accent)">유사도 87%</strong> — 핵심 키워드 포함: 요추지지대 ✓, 틸팅 ✓, S자 곡선 ✓</div>
-      <div style="margin-top:6px;color:var(--text-muted)">제안 점수: <strong style="color:var(--accent)">17~18점 / 20점</strong></div>
-      <div style="margin-top:8px;font-size:12px;color:var(--text-muted)">피드백: 핵심 기능 두 가지를 정확히 언급하고 이유를 구체적으로 설명했습니다. 다만 높이 조절과의 연계 설명이 추가되면 더 완성도 높은 답변이 될 것입니다.</div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">최종 점수 (20점 만점)</label>
-      <input class="form-input" type="number" value="18" style="width:100px;" />
-    </div>
-    <div class="modal-footer">
-      <button class="btn-sm btn-sm-outline" onclick="closeGradingModal()">취소</button>
-      <button class="btn-sm btn-sm-accent" onclick="closeGradingModal()">채점 완료</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     EXAMINEE — INTRO
-═══════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════
+     INTRO (응시자)
+══════════════════════════════════════ -->
 <div id="view-intro" class="view">
-  <div class="intro-card">
-    <span class="intro-mode-tag">📝 시험 모드</span>
-    <div class="intro-title">2월 제품 교육 평가</div>
-    <div class="intro-desc">본 시험은 2월 제품 교육 내용을 바탕으로 구성되었습니다. 시험 시작 전 안내 사항을 꼭 확인해주세요. 총 10문항, 100점 만점입니다.</div>
+  <div class="intro-card" id="intro-card">
+    <div class="platform-tag"><div class="platform-dot" id="platform-dot"></div>TESTIFY — 시디즈 사내 플랫폼</div>
+    <span class="mode-tag" id="intro-mode-tag">📝 시험 모드</span>
+    <div class="intro-title" id="intro-title">2월 제품 교육 평가</div>
+    <div class="intro-desc" id="intro-desc">본 시험은 2월 제품 교육 내용을 바탕으로 구성되었습니다.</div>
     <div class="intro-meta">
-      <div class="intro-meta-item">
-        <div class="intro-meta-label">총 문항</div>
-        <div class="intro-meta-value">10문항</div>
-      </div>
-      <div class="intro-meta-item">
-        <div class="intro-meta-label">시간 제한</div>
-        <div class="intro-meta-value" style="color:var(--accent);">30분</div>
-      </div>
-      <div class="intro-meta-item">
-        <div class="intro-meta-label">만점</div>
-        <div class="intro-meta-value">100점</div>
-      </div>
-      <div class="intro-meta-item">
-        <div class="intro-meta-label">결과 공개</div>
-        <div class="intro-meta-value">즉시</div>
-      </div>
+      <div><div class="im-label">총 문항</div><div class="im-val" id="im-count">4문항</div></div>
+      <div><div class="im-label">시간 제한</div><div class="im-val accent" id="im-time">30분</div></div>
+      <div><div class="im-label">만점</div><div class="im-val" id="im-score">100점</div></div>
+      <div><div class="im-label">결과 공개</div><div class="im-val" id="im-result">제출 즉시</div></div>
     </div>
-    <div class="notice-box" style="margin-bottom:20px;">
+    <div class="intro-notice" id="intro-notice">
       <strong>주의사항</strong><br>
-      시험 시작 후 뒤로 가기 또는 탭을 닫으면 자동 제출됩니다. 시간이 초과되면 작성한 내용이 자동으로 제출됩니다.
+      시험 시작 후 다른 탭으로 이동하거나 뒤로 가기 시 자동으로 기록됩니다. 시간이 초과되면 즉시 제출됩니다.
     </div>
-    <hr class="intro-divider">
-    <div class="form-group">
-      <label class="form-label">이름</label>
-      <input class="form-input" type="text" id="examinee-name" placeholder="홍길동" />
+    <hr class="divider">
+    <div class="fg"><label class="fl">이름</label><input class="intro-fi" id="inp-name" placeholder="홍길동" /></div>
+    <div class="fg" id="pw-group">
+      <label class="fl">응시 비밀번호</label>
+      <input class="intro-fi" type="password" id="inp-pw" placeholder="관리자에게 받은 비밀번호" onkeydown="if(event.key==='Enter')startExam()" />
+      <div class="err" id="inp-err">이름 또는 비밀번호를 확인해주세요.</div>
     </div>
-    <div class="form-group">
-      <label class="form-label">응시 비밀번호</label>
-      <input class="form-input" type="password" id="examinee-pw" placeholder="관리자에게 받은 비밀번호를 입력하세요" />
-    </div>
-    <button class="btn-primary" style="width:100%;padding:14px;" onclick="startExam()">시험 시작하기 →</button>
+    <button class="btn-start" id="btn-start" onclick="startExam()">시험 시작하기 →</button>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════
-     EXAMINEE — EXAM
-═══════════════════════════════════════════ -->
-<div id="view-exam" class="view">
-  <div class="exam-shell">
-    <div class="exam-topbar">
-      <div class="exam-progress-info">
-        <strong id="q-current">1</strong> / <span id="q-total">4</span> 문항
-      </div>
-      <div id="timer" class="timer-display">30:00</div>
-    </div>
-    <div class="progress-bar-wrap">
-      <div class="progress-bar-fill" id="progress-fill" style="width:25%"></div>
-    </div>
-
-    <!-- 문제들 -->
-    <div id="q-container"></div>
-
-    <div class="nav-btns">
-      <button class="btn-nav btn-prev" id="btn-prev" onclick="prevQ()" style="visibility:hidden;">← 이전</button>
-      <button class="btn-nav btn-next" id="btn-next" onclick="nextQ()">다음 →</button>
+<!-- ══════════════════════════════════════
+     EXAM VIEW
+══════════════════════════════════════ -->
+<div id="view-exam-view" class="view">
+  <div class="topbar">
+    <div class="tb-logo">TEST<span id="tb-logo-span">IFY</span></div>
+    <div class="tb-center"><strong id="tb-cur">1</strong> / <span id="tb-tot">4</span></div>
+    <div id="timer" class="timer">30:00</div>
+  </div>
+  <div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
+  <div class="exam-body">
+    <div class="exam-shell"><div id="q-container"></div></div>
+  </div>
+  <div class="exam-footer">
+    <div class="footer-dots" id="footer-dots"></div>
+    <div class="footer-btns">
+      <button class="btn-nav btn-prev" id="btn-prev" onclick="prevQ()">← 이전</button>
+      <button class="btn-nav" id="btn-next" onclick="nextQ()">다음 →</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════
-     EXAMINEE — RESULT
-═══════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════
+     RESULT
+══════════════════════════════════════ -->
 <div id="view-result" class="view">
   <div class="result-card">
-    <div class="result-score-ring">
-      <svg width="120" height="120" viewBox="0 0 120 120">
-        <circle cx="60" cy="60" r="52" fill="none" stroke="#2e2e2e" stroke-width="8"/>
-        <circle cx="60" cy="60" r="52" fill="none" stroke="#d4f060" stroke-width="8"
-          stroke-dasharray="326.7" id="score-circle" stroke-dashoffset="98" stroke-linecap="round"/>
-      </svg>
-      <div class="result-score-num" id="result-score">70</div>
-      <div class="result-score-total">/ 100점</div>
+    <div class="result-top">
+      <div class="score-ring">
+        <svg width="130" height="130" viewBox="0 0 130 130">
+          <circle cx="65" cy="65" r="56" fill="none" stroke="#2e2e2e" stroke-width="8"/>
+          <circle cx="65" cy="65" r="56" fill="none" stroke="#d4f060" stroke-width="8"
+            id="score-circle" stroke-dasharray="351.9" stroke-dashoffset="351.9"
+            stroke-linecap="round" style="transition:stroke-dashoffset 1.2s ease"/>
+        </svg>
+        <div class="score-num" id="res-score">0</div>
+        <div class="score-total" id="res-total">/ 100점</div>
+      </div>
+      <div class="result-grade" id="res-grade"></div>
+      <div class="result-name-lbl" id="res-name"></div>
     </div>
-    <div class="result-title" id="result-grade">수고하셨습니다!</div>
-    <div class="result-sub" id="result-name-display">김민지 님의 시험 결과</div>
-    <div class="answer-review" id="answer-review"></div>
-    <button class="btn-outline" style="width:100%;margin-top:20px;padding:12px;" onclick="goLanding()">← 메인으로</button>
+    <div class="result-summary">
+      <div class="rs-item"><div class="rs-label">정답</div><div class="rs-val" id="rs-ok" style="color:var(--accent)">—</div></div>
+      <div class="rs-item"><div class="rs-label">오답</div><div class="rs-val" id="rs-ng" style="color:var(--accent3)">—</div></div>
+      <div class="rs-item"><div class="rs-label">채점 대기</div><div class="rs-val" id="rs-pend" style="color:var(--accent2)">—</div></div>
+    </div>
+    <div class="review-title">문항별 결과</div>
+    <div class="answer-list" id="answer-list"></div>
+    <div class="result-footer-msg" id="result-footer-msg"></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="grading-modal">
+  <div class="modal">
+    <div class="modal-title">서술형 채점</div>
+    <div class="modal-sub" id="grading-who">김민지 — Q4</div>
+    <div style="background:var(--surface2);border-radius:var(--rs);padding:13px;font-size:13px;line-height:1.7;margin-bottom:14px;">"허리 통증 고객에게는 요추지지대와 좌판 틸팅 잠금 기능을 추천합니다..."</div>
+    <div class="ai-box"><div class="ai-label">🤖 AI 분석 결과</div><div style="font-size:13px;line-height:1.7;">유사도 <strong style="color:var(--accent)">87%</strong> — 핵심 키워드: 요추지지대 ✓ 틸팅 ✓ S자 곡선 ✓<br><span style="color:var(--muted);">제안 점수: <strong style="color:var(--accent)">17~18점 / 20점</strong></span></div></div>
+    <div class="fg"><label class="fl">최종 점수</label><input class="fi fi-inline" type="number" value="18" style="width:100px;" /></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModalById('grading-modal')">취소</button>
+      <button class="btn btn-accent" onclick="closeModalById('grading-modal')">채점 완료</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="new-modal">
+  <div class="modal">
+    <div class="modal-title" id="new-modal-title">새 시험 만들기</div>
+    <div class="modal-sub">제목을 입력하면 바로 편집기로 이동합니다.</div>
+    <div class="fg"><label class="fl">제목</label><input class="fi" id="new-title-input" placeholder="예: 3월 제품 교육 평가" onkeydown="if(event.key==='Enter')confirmNew()" /></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModalById('new-modal')">취소</button>
+      <button class="btn btn-accent" id="new-modal-btn" onclick="confirmNew()">만들기</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="delete-modal">
+  <div class="modal modal-sm">
+    <div style="font-size:28px;margin-bottom:12px;">🗑</div>
+    <div class="modal-title">삭제할까요?</div>
+    <div class="modal-sub" id="delete-modal-sub">삭제하면 복구할 수 없습니다.</div>
+    <div class="modal-footer">
+      <button class="mbtn mbtn-cancel" onclick="closeModalById('delete-modal')">취소</button>
+      <button class="mbtn mbtn-confirm" onclick="confirmDelete()">삭제</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="submit-modal">
+  <div class="modal modal-sm">
+    <div style="font-size:32px;margin-bottom:12px;">📋</div>
+    <div class="modal-title">제출할까요?</div>
+    <div class="modal-sub" id="submit-desc">제출 후에는 수정할 수 없습니다.</div>
+    <div class="modal-footer">
+      <button class="mbtn mbtn-cancel" onclick="closeModalById('submit-modal')">계속 풀기</button>
+      <button class="mbtn mbtn-confirm" onclick="confirmSubmit()">제출하기</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="tab-warn-modal">
+  <div class="warn-modal">
+    <div style="font-size:28px;margin-bottom:8px;">⚠️</div>
+    <div class="modal-title">시험 화면을 벗어났습니다</div>
+    <div class="warn-count" id="warn-count">1회</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px;">이탈 이력이 관리자에게 기록됩니다.<br>3회 이상 이탈 시 자동 제출됩니다.</div>
+    <button class="btn btn-accent" style="width:100%;" onclick="closeModalById('tab-warn-modal')">시험으로 돌아가기</button>
   </div>
 </div>
 
 <script>
-  // ── DATA ──
-  const questions = [
-    {
-      id: 1,
-      type: 'multiple',
-      text: '다음 중 시디즈 메시 소재의 특징으로 올바른 것은?',
-      options: ['통기성이 우수하다', '세탁이 가능하다', '열에 강하다', '방수 기능이 있다'],
-      answer: 0,
-      score: 25,
-    },
-    {
-      id: 2,
-      type: 'ox',
-      text: '틸팅(Tilting) 기능은 등받이가 앞뒤로 기울어지는 기능이다.',
-      answer: 'O',
-      score: 25,
-    },
-    {
-      id: 3,
-      type: 'short',
-      text: '좌판 깊이 조절 기능을 영어로 무엇이라고 하나요?',
-      answer: 'Seat Depth',
-      score: 25,
-    },
-    {
-      id: 4,
-      type: 'essay',
-      text: '고객이 허리 통증을 호소할 때 추천할 수 있는 기능을 하나 이상 설명하고, 그 이유를 서술하시오.',
-      score: 25,
-    },
+// ══════════════════════════════════════
+// DATA & STATE
+// ══════════════════════════════════════
+let items = JSON.parse(localStorage.getItem('testify_v2') || 'null');
+if (!items) {
+  items = [
+    { id:'i1', mode:'exam', title:'2월 제품 교육 평가', pw:'SIDIZ25', desc:'2월 제품 교육 내용 평가입니다.', time:30, random:0, showResult:true, retake:false, shuffleOpts:true, shuffleQ:false, status:'live', questions: defaultQuestions() },
+    { id:'i2', mode:'survey', title:'신입 OJT 만족도 조사', pw:'', desc:'신입 사원 OJT 경험을 공유해주세요.', time:0, random:0, showResult:false, retake:true, shuffleOpts:false, shuffleQ:false, status:'live', questions: defaultSurveyQ() },
+    { id:'i3', mode:'exam', title:'안전 교육 이해도 테스트', pw:'SAFE01', desc:'', time:20, random:0, showResult:true, retake:false, shuffleOpts:true, shuffleQ:false, status:'draft', questions:[] },
   ];
+  save();
+}
 
-  let currentQ = 0;
-  let answers = {};
-  let timerInterval = null;
-  let timeLeft = 30 * 60;
-  let examineeName = '';
+function defaultQuestions() {
+  return [
+    { id:1,type:'multiple',text:'다음 중 시디즈 메시 소재 등받이의 특징으로 올바른 것은?',options:['통기성이 우수하다','물세탁이 가능하다','열에 강하다','방수 기능이 있다'],answer:'0',score:25,explanation:'메시 소재는 통기성이 뛰어납니다.' },
+    { id:2,type:'ox',text:'틸팅(Tilting) 기능은 등받이가 앞뒤로 기울어지는 기능이다.',answer:'O',score:25,explanation:'' },
+    { id:3,type:'short',text:'좌판 깊이 조절 기능을 영어로 무엇이라고 하나요?',answer:'seat depth',score:25,explanation:'' },
+    { id:4,type:'essay',text:'고객이 허리 통증을 호소할 때 추천할 수 있는 기능을 하나 이상 설명하고 이유를 서술하시오.',modelAnswer:'요추지지대(럼버서포트)는 허리의 S자 곡선을 유지해줍니다.',score:25,explanation:'' },
+  ];
+}
+function defaultSurveyQ() {
+  return [
+    { id:10,type:'multiple',text:'OJT 전반적인 만족도는 어떠셨나요?',options:['매우 만족','만족','보통','불만족'],answer:'',score:0,explanation:'' },
+    { id:11,type:'scale',text:'교육 내용의 실무 적용 가능성을 점수로 평가해주세요. (1~5)',answer:'',score:0,explanation:'' },
+    { id:12,type:'essay',text:'OJT 과정에서 개선되었으면 하는 점을 자유롭게 작성해주세요.',answer:'',score:0,explanation:'' },
+  ];
+}
 
-  // ── ROUTING ──
-  function showView(id) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById('view-' + id).classList.add('active');
-  }
+function save() { localStorage.setItem('testify_v2', JSON.stringify(items)); }
 
-  function goLanding() { showView('landing'); clearInterval(timerInterval); }
-  function goAdmin() { showView('admin'); }
-  function goIntro() { showView('intro'); }
+// ══ CURRENT EDITOR STATE ══
+let currentId = null;
+let newModalMode = 'exam';
+let deleteTargetId = null;
+let nextQId = 200;
+let excelRows = [];
 
-  // ── ADMIN ──
-  function showAdminPanel(name, navEl) {
-    document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('panel-' + name).classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    navEl.classList.add('active');
-  }
-  function showEditorTab(name, el) {
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.getElementById('tab-' + name).classList.add('active');
-    document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
+// ══ EXAM STATE ══
+let activeItem = null;
+let currentQ = 0;
+let answers = {};
+let shuffledOpts = {};
+let timerInterval = null;
+let timeLeft = 0;
+let examineeName = '';
+let tabWarnCount = 0;
+let examStarted = false;
+
+// ══════════════════════════════════════
+// ROUTING
+// ══════════════════════════════════════
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+}
+function goLanding() { showView('landing'); clearInterval(timerInterval); examStarted = false; }
+function goAdmin()    { showView('admin'); renderAll(); }
+function goExaminee() {
+  // 샘플 시험으로 응시자 뷰 진입 (실제론 URL 파라미터로 분기)
+  loadIntro(items.find(i=>i.id==='i1'));
+  showView('intro');
+}
+
+// ══ ADMIN NAV ══
+document.querySelectorAll('.nav-item[data-panel]').forEach(el => {
+  el.addEventListener('click', () => nav(el.dataset.panel));
+});
+function nav(panel) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + panel).classList.add('active');
+  document.querySelector(`.nav-item[data-panel="${panel}"]`)?.classList.add('active');
+  if (['dashboard','exam-list','survey-list'].includes(panel)) renderAll();
+  if (panel === 'editor' && !currentId) openNewModal('exam');
+}
+
+// ══════════════════════════════════════
+// RENDER GRIDS
+// ══════════════════════════════════════
+function renderAll() {
+  const exams   = items.filter(i => i.mode === 'exam');
+  const surveys  = items.filter(i => i.mode === 'survey');
+
+  document.getElementById('stat-exam-cnt').textContent = exams.length;
+  document.getElementById('stat-survey-cnt').textContent = surveys.length;
+
+  renderGrid('dash-exam-grid',   exams.slice(0,3),   'exam',   true);
+  renderGrid('dash-survey-grid', surveys.slice(0,3),  'survey', true);
+  renderGrid('list-exam-grid',   exams,               'exam',   false);
+  renderGrid('list-survey-grid', surveys,              'survey', false);
+}
+
+function renderGrid(containerId, list, mode, showAdd) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const addLabel = mode === 'exam' ? '새 시험 만들기' : '새 설문 만들기';
+  const addClass = mode === 'survey' ? 'survey-add' : '';
+  el.innerHTML = list.map(item => cardHTML(item)).join('') +
+    (showAdd ? `<div class="add-card ${addClass}" onclick="openNewModal('${mode}')"><div style="font-size:22px;">＋</div><div>${addLabel}</div></div>` : '');
+}
+
+function cardHTML(item) {
+  const badgeMap = { live:'badge-live', draft:'badge-draft', closed:'badge-closed' };
+  const badgeTextMap = { live:'진행중', draft:'임시저장', closed:'마감' };
+  const typeClass = item.mode === 'exam' ? 'type-exam' : 'type-survey';
+  return `<div class="exam-card ${typeClass}">
+    <div class="ec-header">
+      <div class="ec-title">${item.title}</div>
+      <span class="badge ${badgeMap[item.status]||'badge-draft'}">${badgeTextMap[item.status]||'임시저장'}</span>
+    </div>
+    <div class="ec-meta">
+      <span>📋 ${item.questions.length}문항</span>
+      ${item.time ? `<span>⏱ ${item.time}분</span>` : ''}
+      ${item.mode==='exam'&&item.status==='live'?`<span>👤 ${Math.floor(Math.random()*20)+1}명</span>`:''}
+    </div>
+    <div class="ec-actions">
+      <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();editItem('${item.id}')">편집</button>
+      <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();previewExaminee('${item.id}')">미리보기</button>
+      <button class="btn btn-xs btn-danger" onclick="event.stopPropagation();askDelete('${item.id}')">삭제</button>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════
+// NEW / EDIT / DELETE
+// ══════════════════════════════════════
+function openNewModal(mode) {
+  newModalMode = mode;
+  document.getElementById('new-modal-title').textContent = mode==='exam' ? '새 시험 만들기' : '새 설문 만들기';
+  document.getElementById('new-modal-btn').className = mode==='exam' ? 'btn btn-accent' : 'btn btn-blue';
+  document.getElementById('new-title-input').value = '';
+  document.getElementById('new-modal').classList.add('open');
+  setTimeout(() => document.getElementById('new-title-input').focus(), 100);
+}
+
+function confirmNew() {
+  const title = document.getElementById('new-title-input').value.trim() || (newModalMode==='exam'?'새 시험':'새 설문');
+  closeModalById('new-modal');
+  const id = 'i' + Date.now();
+  const newItem = { id, mode:newModalMode, title, pw:'', desc:'', time: newModalMode==='exam'?30:0,
+    random:0, showResult: newModalMode==='exam', retake:false, shuffleOpts:true, shuffleQ:false,
+    status:'draft', questions:[] };
+  items.push(newItem);
+  save();
+  editItem(id);
+}
+
+function editItem(id) {
+  currentId = id;
+  const item = items.find(i => i.id === id);
+  nav('editor');
+  document.getElementById('editor-title').textContent = item.title;
+  document.getElementById('editor-sub').textContent = item.mode==='exam' ? '시험 편집' : '설문 편집';
+  // 유형에 따라 배포 버튼 색상
+  document.getElementById('btn-deploy').className = item.mode==='exam' ? 'btn btn-accent' : 'btn btn-blue';
+  loadEditorFields(item);
+}
+
+function loadEditorFields(item) {
+  document.getElementById('f-title').value = item.title;
+  document.getElementById('f-pw').value = item.pw;
+  document.getElementById('f-desc').value = item.desc;
+  document.getElementById('f-time').value = item.time;
+  document.getElementById('f-random').value = item.random;
+  document.getElementById('tgl-result').className = 'tgl' + (item.showResult?' on':'');
+  document.getElementById('tgl-retake').className  = 'tgl' + (item.retake?' on':'');
+  document.getElementById('tgl-shuffle').className = 'tgl' + (item.shuffleOpts?' on':'');
+  document.getElementById('tgl-qshuffle').className= 'tgl' + (item.shuffleQ?' on':'');
+  setEditorMode(item.mode);
+  renderQList(item.questions, item.mode);
+  updateSharePanel(item);
+}
+
+function setEditorMode(mode) {
+  const item = items.find(i=>i.id===currentId);
+  if (item) { item.mode = mode; save(); }
+  document.getElementById('mode-exam-btn').className   = 'mode-btn' + (mode==='exam'?' sel-exam':'');
+  document.getElementById('mode-survey-btn').className = 'mode-btn' + (mode==='survey'?' sel-survey':'');
+  // 척도 버튼 표시
+  document.getElementById('btn-add-scale').style.display = mode==='survey'?'':'none';
+  // 채점 관련 토글 시각적 구분
+  document.getElementById('tgl-row-shuffle').style.display = mode==='exam'?'':'none';
+}
+
+function getCurrent() { return items.find(i=>i.id===currentId); }
+
+function saveItem(draft) {
+  const item = getCurrent();
+  if (!item) return;
+  item.title = document.getElementById('f-title').value || '제목 없음';
+  item.pw    = document.getElementById('f-pw').value;
+  item.desc  = document.getElementById('f-desc').value;
+  item.time  = parseInt(document.getElementById('f-time').value)||0;
+  item.random= parseInt(document.getElementById('f-random').value)||0;
+  item.showResult = document.getElementById('tgl-result').classList.contains('on');
+  item.retake     = document.getElementById('tgl-retake').classList.contains('on');
+  item.shuffleOpts= document.getElementById('tgl-shuffle').classList.contains('on');
+  item.shuffleQ   = document.getElementById('tgl-qshuffle').classList.contains('on');
+  item.status = draft ? 'draft' : 'live';
+  save();
+  updateSharePanel(item);
+  document.getElementById('editor-title').textContent = item.title;
+  alert(draft ? '임시저장 완료!' : '배포 완료! 링크를 공유하세요.');
+}
+
+function askDelete(id) {
+  deleteTargetId = id;
+  const item = items.find(i=>i.id===id);
+  document.getElementById('delete-modal-sub').textContent = `"${item.title}"을(를) 삭제합니다. 복구할 수 없습니다.`;
+  document.getElementById('delete-modal').classList.add('open');
+}
+function confirmDelete() {
+  items = items.filter(i=>i.id!==deleteTargetId);
+  save(); closeModalById('delete-modal'); renderAll();
+}
+
+// ══ SHARE ══
+function updateSharePanel(item) {
+  const code = item.id.toUpperCase().slice(-6);
+  document.getElementById('share-url-exam').textContent  = `testify.sidiz.com/test/${code}`;
+  document.getElementById('share-url-admin').textContent = `testify.sidiz.com/admin/${code}`;
+  document.getElementById('share-pw-display').textContent = item.pw || '(없음 — 공개)';
+  const isLive = item.status==='live';
+  document.getElementById('share-status-badge').textContent = isLive?'진행중':'비활성';
+  document.getElementById('tgl-live').className = 'tgl'+(isLive?' on':'');
+}
+function updateShareStatus() {
+  const item = getCurrent(); if(!item) return;
+  item.status = document.getElementById('tgl-live').classList.contains('on') ? 'live' : 'closed';
+  save(); updateSharePanel(item);
+}
+function copyShareUrl(type) {
+  const text = document.getElementById(`share-url-${type}`).textContent;
+  navigator.clipboard.writeText(text).then(()=>alert('링크가 복사되었습니다!'));
+}
+
+// ══ EDITOR TABS ══
+document.querySelectorAll('.etab').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    document.querySelectorAll('.etab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tcontent').forEach(t=>t.classList.remove('active'));
     el.classList.add('active');
-  }
-  function selectMode(el) {
-    el.parentElement.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
-    el.classList.add('selected');
-  }
-  function openGradingModal() { document.getElementById('grading-modal').classList.add('open'); }
-  function closeGradingModal() { document.getElementById('grading-modal').classList.remove('open'); }
+    document.getElementById('tab-'+el.dataset.tab).classList.add('active');
+  });
+});
 
-  // ── EXAM ──
-  function startExam() {
-    const name = document.getElementById('examinee-name').value.trim();
-    const pw = document.getElementById('examinee-pw').value.trim();
-    if (!name) { alert('이름을 입력해주세요.'); return; }
-    if (!pw) { alert('응시 비밀번호를 입력해주세요.'); return; }
-    if (pw !== 'SIDIZ25') { alert('비밀번호가 올바르지 않습니다.\n힌트: SIDIZ25'); return; }
-    examineeName = name;
-    currentQ = 0;
-    answers = {};
-    timeLeft = 30 * 60;
-    showView('exam');
-    document.getElementById('q-total').textContent = questions.length;
-    renderQuestion();
-    startTimer();
-  }
+// ══════════════════════════════════════
+// QUESTION EDITOR
+// ══════════════════════════════════════
+function renderQList(qs, mode) {
+  document.getElementById('q-count').textContent = qs.length;
+  const list = document.getElementById('q-list');
+  list.innerHTML = qs.map((q,i)=>qItemHTML(q,i,mode)).join('');
+  list.querySelectorAll('.q-item-header').forEach(h=>{
+    h.addEventListener('click',()=>h.parentElement.classList.toggle('open'));
+  });
+}
 
-  function renderQuestion() {
-    const q = questions[currentQ];
-    const container = document.getElementById('q-container');
-    document.getElementById('q-current').textContent = currentQ + 1;
-    document.getElementById('progress-fill').style.width = ((currentQ + 1) / questions.length * 100) + '%';
+function qItemHTML(q, i, mode) {
+  const typeLabel = {multiple:'객관식',ox:'OX',short:'단답형',essay:'서술형',scale:'척도 (1~5)'}[q.type];
+  let body = `<div class="fg"><label class="fl">문제</label><textarea class="fi" rows="2" onchange="updateQ('${q.id}','text',this.value)">${q.text||''}</textarea></div>`;
 
-    const typeLabel = { multiple:'객관식', ox:'OX', short:'단답형', essay:'서술형' }[q.type];
-
-    let inputHtml = '';
-    if (q.type === 'multiple') {
-      inputHtml = `<div class="options-list">` +
-        q.options.map((o, i) =>
-          `<button class="option-btn ${answers[q.id] === i ? 'selected' : ''}" onclick="selectOption(this, ${i})">
-            <span class="option-num">${i+1}</span>${o}
-          </button>`
-        ).join('') + `</div>`;
-    } else if (q.type === 'ox') {
-      const sel = answers[q.id];
-      inputHtml = `<div class="ox-btns">
-        <button class="ox-btn ${sel==='O'?'selected-o':''}" onclick="selectOX(this,'O')">○</button>
-        <button class="ox-btn ${sel==='X'?'selected-x':''}" onclick="selectOX(this,'X')">✕</button>
-      </div>`;
-    } else if (q.type === 'short') {
-      inputHtml = `<input class="short-input" type="text" placeholder="답을 입력하세요" value="${answers[q.id]||''}"
-        oninput="answers[${q.id}]=this.value" />`;
-    } else if (q.type === 'essay') {
-      inputHtml = `<textarea class="essay-area" placeholder="자유롭게 서술하세요..."
-        oninput="answers[${q.id}]=this.value">${answers[q.id]||''}</textarea>`;
-    }
-
-    container.innerHTML = `
-      <div class="question-card">
-        <div class="q-header">
-          <div class="q-number">${currentQ+1}</div>
-          <div class="q-type-label">${typeLabel}</div>
-          <div class="q-score-label">${q.score}점</div>
-        </div>
-        <div class="question-text">${q.text}</div>
-        ${inputHtml}
-      </div>`;
-
-    document.getElementById('btn-prev').style.visibility = currentQ === 0 ? 'hidden' : 'visible';
-    const isLast = currentQ === questions.length - 1;
-    const nextBtn = document.getElementById('btn-next');
-    nextBtn.textContent = isLast ? '제출하기' : '다음 →';
-    nextBtn.className = 'btn-nav ' + (isLast ? 'btn-submit' : 'btn-next');
-    nextBtn.onclick = isLast ? submitExam : nextQ;
+  if (q.type==='multiple') {
+    body += `<div class="fg"><label class="fl">보기 (번호 클릭 = 정답)</label><div class="options-editor">`+
+      (q.options||['','','','']).map((o,oi)=>
+        `<div class="opt-row">
+          <div class="opt-label ${String(q.answer)===String(oi)?'correct':''}" onclick="setAnswer('${q.id}',${oi},this)">${oi+1}</div>
+          <input class="fi" value="${o}" placeholder="보기 ${oi+1}" onchange="updateOpt('${q.id}',${oi},this.value)"/>
+        </div>`
+      ).join('')+`</div></div>`;
+    if (mode==='exam') body+=`<div class="fg"><label class="fl">해설 (선택)</label><input class="fi" value="${q.explanation||''}" onchange="updateQ('${q.id}','explanation',this.value)"/></div>`;
+  } else if (q.type==='ox') {
+    body+=`<div class="fg"><label class="fl">정답</label><div class="flex gap-10">
+      <button class="mode-btn ${q.answer==='O'?'sel-exam':''}" style="max-width:80px;" onclick="updateQ('${q.id}','answer','O');reRenderQ()">O</button>
+      <button class="mode-btn ${q.answer==='X'?'sel-exam':''}" style="max-width:80px;" onclick="updateQ('${q.id}','answer','X');reRenderQ()">X</button>
+    </div></div>`;
+  } else if (q.type==='short') {
+    body+=`<div class="fg"><label class="fl">정답</label><input class="fi" value="${q.answer||''}" onchange="updateQ('${q.id}','answer',this.value)"/></div>`;
+  } else if (q.type==='essay') {
+    body+=`<div class="fg"><label class="fl">모범 답안 (AI 채점 기준)</label><textarea class="fi" rows="3" onchange="updateQ('${q.id}','modelAnswer',this.value)">${q.modelAnswer||''}</textarea></div>`;
+  } else if (q.type==='scale') {
+    body+=`<div class="fg"><label class="fl">척도 라벨 (좌측)</label><input class="fi" value="${q.scaleMin||'전혀 아니다'}" onchange="updateQ('${q.id}','scaleMin',this.value)"/></div>
+    <div class="fg"><label class="fl">척도 라벨 (우측)</label><input class="fi" value="${q.scaleMax||'매우 그렇다'}" onchange="updateQ('${q.id}','scaleMax',this.value)"/></div>`;
   }
 
-  function selectOption(el, idx) {
-    el.closest('.options-list').querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-    el.classList.add('selected');
-    answers[questions[currentQ].id] = idx;
-  }
-  function selectOX(el, val) {
-    el.parentElement.querySelectorAll('.ox-btn').forEach(b => b.className = 'ox-btn');
-    el.classList.add(val === 'O' ? 'selected-o' : 'selected-x');
-    answers[questions[currentQ].id] = val;
-  }
-
-  function nextQ() { if (currentQ < questions.length - 1) { currentQ++; renderQuestion(); } }
-  function prevQ() { if (currentQ > 0) { currentQ--; renderQuestion(); } }
-
-  function startTimer() {
-    clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-      timeLeft--;
-      const m = String(Math.floor(timeLeft/60)).padStart(2,'0');
-      const s = String(timeLeft%60).padStart(2,'0');
-      const el = document.getElementById('timer');
-      el.textContent = `${m}:${s}`;
-      if (timeLeft <= 300) el.classList.add('warning');
-      if (timeLeft <= 0) { clearInterval(timerInterval); submitExam(); }
-    }, 1000);
+  if (mode==='exam' && q.type!=='scale') {
+    body+=`<div class="flex justify-between items-center mt-12">
+      <div class="flex gap-8 items-center">
+        <label class="fl" style="margin-bottom:0;">배점</label>
+        <input class="fi fi-sm fi-inline" type="number" value="${q.score||10}" style="width:70px;" onchange="updateQ('${q.id}','score',+this.value)"/>
+        <span style="font-size:13px;color:var(--muted);">점</span>
+      </div>
+      <button class="btn btn-xs btn-danger" onclick="deleteQ('${q.id}')">삭제</button>
+    </div>`;
+  } else {
+    body+=`<div class="flex justify-between items-center mt-12">
+      <span></span>
+      <button class="btn btn-xs btn-danger" onclick="deleteQ('${q.id}')">삭제</button>
+    </div>`;
   }
 
-  function submitExam() {
-    clearInterval(timerInterval);
-    let total = 0;
-    const review = [];
+  return `<div class="q-item" id="qi-${q.id}">
+    <div class="q-item-header">
+      <span class="q-drag">⠿</span>
+      <div class="q-num-b">${i+1}</div>
+      <div class="q-preview">${q.text||'(문제를 입력하세요)'}</div>
+      <span class="q-type-tag">${typeLabel}</span>
+      ${mode==='exam'?`<span class="q-score-tag">${q.score||10}점</span>`:''}
+      <span class="q-chevron">▾</span>
+    </div>
+    <div class="q-body">${body}</div>
+  </div>`;
+}
 
-    questions.forEach(q => {
-      if (q.type === 'multiple') {
-        const correct = answers[q.id] === q.answer;
-        if (correct) total += q.score;
-        review.push({ text: q.text, correct, myAnswer: q.options[answers[q.id]] ?? '미응답', correctAnswer: q.options[q.answer] });
-      } else if (q.type === 'ox') {
-        const correct = answers[q.id] === q.answer;
-        if (correct) total += q.score;
-        review.push({ text: q.text, correct, myAnswer: answers[q.id] ?? '미응답', correctAnswer: q.answer });
-      } else if (q.type === 'short') {
-        const correct = (answers[q.id]||'').toLowerCase().replace(/\s/g,'') === q.answer.toLowerCase().replace(/\s/g,'');
-        if (correct) total += q.score;
-        review.push({ text: q.text, correct, myAnswer: answers[q.id] ?? '미응답', correctAnswer: q.answer });
-      } else {
-        review.push({ text: q.text, correct: null, myAnswer: answers[q.id] ?? '(미작성)', correctAnswer: '관리자 채점' });
-      }
+function addQ(type) {
+  const item = getCurrent(); if(!item) return;
+  const q = { id:++nextQId, type, text:'', score:10,
+    options: type==='multiple'?['','','','']:undefined,
+    answer: type==='ox'?'O':type==='multiple'?'0':'',
+    modelAnswer:'', explanation:'', scaleMin:'전혀 아니다', scaleMax:'매우 그렇다' };
+  item.questions.push(q);
+  save();
+  renderQList(item.questions, item.mode);
+  setTimeout(()=>{ const el=document.getElementById('qi-'+q.id); if(el){el.classList.add('open');el.scrollIntoView({behavior:'smooth'});} },50);
+}
+function deleteQ(qid) {
+  const item=getCurrent(); item.questions=item.questions.filter(q=>String(q.id)!==String(qid)); save(); renderQList(item.questions,item.mode);
+}
+function updateQ(qid,field,val) {
+  const item=getCurrent(); const q=item.questions.find(q=>String(q.id)===String(qid)); if(q){q[field]=val;save();}
+}
+function updateOpt(qid,oi,val) {
+  const item=getCurrent(); const q=item.questions.find(q=>String(q.id)===String(qid)); if(q&&q.options){q.options[oi]=val;save();}
+}
+function setAnswer(qid,oi,el) {
+  updateQ(qid,'answer',String(oi));
+  el.closest('.options-editor').querySelectorAll('.opt-label').forEach((l,i)=>l.classList.toggle('correct',i===oi));
+}
+function reRenderQ() {
+  const item=getCurrent(); renderQList(item.questions,item.mode);
+}
+
+// ══ EXCEL ══
+function handleDrop(e) {
+  e.preventDefault(); document.getElementById('drop-zone').classList.remove('over');
+  if(e.dataTransfer.files[0]) handleExcel(e.dataTransfer.files[0]);
+}
+function handleExcel(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const wb=XLSX.read(ev.target.result,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    excelRows=XLSX.utils.sheet_to_json(ws,{defval:''});
+    renderExcelPreview(excelRows);
+  };
+  reader.readAsArrayBuffer(file);
+}
+function renderExcelPreview(rows) {
+  if(!rows.length){document.getElementById('excel-preview').innerHTML='<p style="color:var(--muted);margin-top:12px;">데이터 없음</p>';return;}
+  const cols=Object.keys(rows[0]);
+  document.getElementById('excel-preview').innerHTML=
+    `<div class="preview-table-wrap"><table class="preview-table"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.slice(0,5).map(r=>`<tr>${cols.map(c=>`<td>${r[c]}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+     <p style="font-size:12px;color:var(--muted);margin-top:8px;">총 ${rows.length}행 (미리보기 최대 5행)</p>`;
+  document.getElementById('excel-btn-row').style.display='block';
+}
+function importExcel() {
+  const item=getCurrent(); if(!item||!excelRows.length) return;
+  const typeMap={'객관식':'multiple','OX':'ox','ox':'ox','단답형':'short','서술형':'essay','척도':'scale'};
+  const newQs=excelRows.map(r=>({
+    id:++nextQId, type:typeMap[r.type]||'multiple', text:r.question||'',
+    options:['multiple'].includes(typeMap[r.type])?[r.option_1||'',r.option_2||'',r.option_3||'',r.option_4||'']:undefined,
+    answer:r.answer||(typeMap[r.type]==='ox'?'O':'0'), modelAnswer:r.model_answer||'',
+    score:parseInt(r.score)||10, explanation:r.explanation||'',
+  }));
+  item.questions.push(...newQs);
+  save(); renderQList(item.questions,item.mode);
+  document.querySelector('.etab[data-tab="questions"]').click();
+  alert(`${newQs.length}개 문항을 가져왔습니다!`);
+}
+
+// ══ RESULTS ══
+function openGrading(name) {
+  document.getElementById('grading-who').textContent=`${name} — Q4. 고객 허리 통증 추천 기능 서술`;
+  document.getElementById('grading-modal').classList.add('open');
+}
+function downloadResultExcel() {
+  const data=[['이름','제출시각','소요시간','점수','서술형'],['김민지','14:23','22분',95,'대기'],['이준혁','14:31','28분',88,'완료'],['박서연','14:18','18분',72,'대기'],['최동우','14:45','시간초과',55,'대기']];
+  const ws=XLSX.utils.aoa_to_sheet(data); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'결과'); XLSX.writeFile(wb,'시험결과.xlsx');
+}
+
+// ══ MODALS ══
+function closeModalById(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-bg').forEach(bg=>{
+  bg.addEventListener('click',e=>{ if(e.target===bg) bg.classList.remove('open'); });
+});
+
+// ══════════════════════════════════════
+// EXAMINEE — PREVIEW
+// ══════════════════════════════════════
+function previewExaminee(id) {
+  const item = items.find(i=>i.id===id);
+  loadIntro(item);
+  showView('intro');
+}
+
+function loadIntro(item) {
+  activeItem = item;
+  const isSurvey = item.mode === 'survey';
+
+  // 스타일 적용
+  document.getElementById('intro-card').className  = 'intro-card' + (isSurvey?' survey-card':'');
+  document.getElementById('platform-dot').className = 'platform-dot' + (isSurvey?' survey':'');
+  const modeTag = document.getElementById('intro-mode-tag');
+  modeTag.textContent = isSurvey ? '📊 설문 모드' : '📝 시험 모드';
+  modeTag.className = 'mode-tag' + (isSurvey?' survey':'');
+
+  document.getElementById('intro-title').textContent = item.title;
+  document.getElementById('intro-desc').textContent  = item.desc || '안내 문구가 없습니다.';
+  document.getElementById('im-count').textContent    = item.questions.length + '문항';
+  document.getElementById('im-time').textContent     = item.time ? item.time+'분' : '제한 없음';
+  document.getElementById('im-time').className       = 'im-val' + (isSurvey?' blue':' accent');
+  document.getElementById('im-score').textContent    = isSurvey ? '—' : item.questions.reduce((a,q)=>a+(q.score||0),0)+'점';
+  document.getElementById('im-result').textContent   = item.showResult ? '제출 즉시' : '비공개';
+
+  const notice = document.getElementById('intro-notice');
+  notice.className = 'intro-notice' + (isSurvey?' survey-notice':'');
+  notice.innerHTML = isSurvey
+    ? '<strong>안내</strong><br>솔직한 의견을 자유롭게 작성해주세요. 익명으로 처리됩니다.'
+    : '<strong>주의사항</strong><br>시험 시작 후 다른 탭으로 이동 시 자동으로 기록됩니다. 시간 초과 시 즉시 제출됩니다.';
+
+  document.getElementById('pw-group').style.display = item.pw ? '' : 'none';
+  const startBtn = document.getElementById('btn-start');
+  startBtn.textContent = isSurvey ? '설문 시작하기 →' : '시험 시작하기 →';
+  startBtn.className = 'btn-start' + (isSurvey?' survey-start':'');
+
+  const inp = document.getElementById('inp-name');
+  inp.className = 'intro-fi' + (isSurvey?' survey-fi':'');
+  const pw = document.getElementById('inp-pw');
+  pw.className = 'intro-fi' + (isSurvey?' survey-fi':'');
+}
+
+// ══════════════════════════════════════
+// EXAM / SURVEY FLOW
+// ══════════════════════════════════════
+// SECURITY
+document.addEventListener('contextmenu', e=>{ if(examStarted) e.preventDefault(); });
+document.addEventListener('dragstart',   e=>{ if(examStarted) e.preventDefault(); });
+document.addEventListener('copy',        e=>{ if(examStarted) e.preventDefault(); });
+document.addEventListener('cut',         e=>{ if(examStarted) e.preventDefault(); });
+document.addEventListener('keydown', e=>{
+  if(!examStarted) return;
+  if((e.ctrlKey||e.metaKey)&&['c','a','s','p','u'].includes(e.key.toLowerCase())) e.preventDefault();
+  if(e.key==='F12') e.preventDefault();
+  if(e.key==='PrintScreen'){ document.body.style.filter='blur(20px)'; setTimeout(()=>document.body.style.filter='',800); }
+});
+document.addEventListener('visibilitychange',()=>{
+  if(!examStarted) return;
+  if(document.hidden){
+    tabWarnCount++;
+    if(tabWarnCount>=3){ clearInterval(timerInterval); confirmSubmit(); return; }
+    document.getElementById('warn-count').textContent=tabWarnCount+'회';
+    document.getElementById('tab-warn-modal').classList.add('open');
+  }
+});
+window.addEventListener('blur',()=>{ if(!examStarted) return; const q=document.querySelector('.q-text'); if(q)q.style.filter='blur(8px)'; });
+window.addEventListener('focus',()=>{ const q=document.querySelector('.q-text'); if(q)q.style.filter=''; });
+
+function startExam() {
+  const name = document.getElementById('inp-name').value.trim();
+  const pw   = document.getElementById('inp-pw').value.trim();
+  const err  = document.getElementById('inp-err');
+  if (!name) { err.classList.add('show'); return; }
+  if (activeItem.pw && pw !== activeItem.pw) { err.classList.add('show'); return; }
+  err.classList.remove('show');
+  examineeName = name;
+  currentQ = 0; answers = {}; tabWarnCount = 0;
+  timeLeft = activeItem.time * 60;
+
+  // 보기 셔플
+  shuffledOpts = {};
+  if (activeItem.shuffleOpts) {
+    activeItem.questions.forEach(q=>{
+      if(q.type==='multiple') { const idx=q.options.map((_,i)=>i); for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]];}; shuffledOpts[q.id]=idx; }
     });
-
-    showResult(total, review);
   }
 
-  function showResult(score, review) {
-    showView('result');
-    document.getElementById('result-score').textContent = score;
-    document.getElementById('result-name-display').textContent = examineeName + ' 님의 시험 결과';
+  // 상단 바 스타일
+  const isSurvey = activeItem.mode==='survey';
+  document.getElementById('tb-logo-span').className = isSurvey ? 'survey' : '';
+  document.getElementById('prog-bar').className = 'prog-bar' + (isSurvey?' survey':'');
+  document.getElementById('tb-tot').textContent = activeItem.questions.length;
+  document.getElementById('timer').className = 'timer' + (activeItem.time===0?' notime':'');
 
-    const grade = score >= 90 ? '🎉 우수합니다!' : score >= 70 ? '수고하셨습니다!' : '더 분발해봐요!';
-    document.getElementById('result-grade').textContent = grade;
+  showView('exam-view');
+  renderDots();
+  renderQ();
+  if (activeItem.time > 0) startTimer();
+  examStarted = true;
+}
 
-    // 원형 게이지
-    const offset = 326.7 * (1 - score/100);
-    document.getElementById('score-circle').style.strokeDashoffset = offset;
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(()=>{
+    timeLeft--;
+    const m=String(Math.floor(timeLeft/60)).padStart(2,'0');
+    const s=String(timeLeft%60).padStart(2,'0');
+    const el=document.getElementById('timer');
+    el.textContent=`${m}:${s}`;
+    if(timeLeft<=300) el.classList.add('warn');
+    if(timeLeft<=0){ clearInterval(timerInterval); confirmSubmit(); }
+  },1000);
+}
 
-    const container = document.getElementById('answer-review');
-    container.innerHTML = review.map(r => {
-      const iconClass = r.correct === null ? '' : r.correct ? 'correct' : 'incorrect';
-      const icon = r.correct === null ? '✎' : r.correct ? '✓' : '✕';
-      return `<div class="answer-item">
-        <div class="answer-icon ${iconClass}">${icon}</div>
-        <div class="answer-text">
-          <div class="answer-q">${r.text}</div>
-          <div class="answer-detail">
-            내 답변: ${r.myAnswer}
-            ${r.correct === false ? ` &nbsp;|&nbsp; <span class="answer-correct">정답: ${r.correctAnswer}</span>` : ''}
-            ${r.correct === null ? ' &nbsp;|&nbsp; <span style="color:var(--accent2)">관리자 채점 예정</span>' : ''}
-          </div>
-        </div>
-      </div>`;
-    }).join('');
+function renderQ() {
+  const q = activeItem.questions[currentQ];
+  const isSurvey = activeItem.mode === 'survey';
+  document.getElementById('tb-cur').textContent = currentQ+1;
+  document.getElementById('prog-bar').style.width = ((currentQ+1)/activeItem.questions.length*100)+'%';
+
+  const typeLabel = {multiple:'객관식',ox:'O / X',short:'단답형',essay:'서술형',scale:'척도'}[q.type];
+  let inputHTML = '';
+
+  if (q.type==='multiple') {
+    const order = shuffledOpts[q.id] || q.options.map((_,i)=>i);
+    const surveyClass = isSurvey ? ' survey' : '';
+    inputHTML=`<div class="opts">`+order.map((origIdx,di)=>{
+      const isSel = answers[q.id]===origIdx;
+      return `<button class="opt ${isSel?'sel'+surveyClass:''}" onclick="selectOpt(this,${origIdx})">
+        <span class="opt-n">${di+1}</span><span>${q.options[origIdx]}</span>
+      </button>`;
+    }).join('')+`</div>`;
+  } else if (q.type==='ox') {
+    const sel=answers[q.id];
+    inputHTML=`<div class="ox-wrap">
+      <button class="ox-btn ${sel==='O'?'o':''}" onclick="selectOX(this,'O')">○</button>
+      <button class="ox-btn ${sel==='X'?'x':''}" onclick="selectOX(this,'X')">✕</button>
+    </div>`;
+  } else if (q.type==='short') {
+    inputHTML=`<input class="short-inp ${isSurvey?'survey':''}" type="text" placeholder="답을 입력하세요" value="${answers[q.id]||''}" oninput="answers[${q.id}]=this.value;updateDots()"/>`;
+  } else if (q.type==='essay') {
+    const val=answers[q.id]||'';
+    inputHTML=`<textarea class="essay-area ${isSurvey?'survey':''}" id="essay-${q.id}" placeholder="자유롭게 서술하세요…" oninput="answers[${q.id}]=this.value;updateDots();updateCnt(${q.id})">${val}</textarea><div class="essay-cnt" id="cnt-${q.id}">${val.length}자</div>`;
+  } else if (q.type==='scale') {
+    const sel=answers[q.id];
+    inputHTML=`<div class="scale-wrap">
+      <span class="scale-label">${q.scaleMin||'전혀 아니다'}</span>
+      <div class="scale-btns">${[1,2,3,4,5].map(n=>`<button class="scale-btn ${sel===n?'sel':''}" onclick="selectScale(this,${n},${q.id})">${n}</button>`).join('')}</div>
+      <span class="scale-label">${q.scaleMax||'매우 그렇다'}</span>
+    </div>`;
   }
+
+  const numBadgeClass = 'q-num-badge' + (isSurvey?' survey':'');
+  document.getElementById('q-container').innerHTML=`
+    <div class="q-card">
+      <div class="q-header">
+        <div class="${numBadgeClass}">${currentQ+1}</div>
+        <div class="q-type-lbl">${typeLabel}</div>
+        ${!isSurvey&&q.score?`<div class="q-score-lbl">${q.score}점</div>`:''}
+      </div>
+      <div class="q-text">${q.text}</div>
+      ${inputHTML}
+    </div>`;
+
+  const isLast = currentQ===activeItem.questions.length-1;
+  document.getElementById('btn-prev').style.visibility = currentQ===0?'hidden':'visible';
+  const nb=document.getElementById('btn-next');
+  nb.textContent = isLast ? '제출하기' : '다음 →';
+  nb.className = 'btn-nav ' + (isLast ? 'btn-submit-btn' : (isSurvey?'btn-next-survey':'btn-next-exam'));
+  nb.onclick = isLast ? openSubmitModal : nextQ;
+
+  updateDots();
+}
+
+function updateCnt(id) {
+  const ta=document.getElementById('essay-'+id); const cnt=document.getElementById('cnt-'+id);
+  if(ta&&cnt) cnt.textContent=ta.value.length+'자';
+}
+function selectOpt(el,origIdx) {
+  el.closest('.opts').querySelectorAll('.opt').forEach(b=>b.classList.remove('sel','survey'));
+  const isSurvey=activeItem.mode==='survey';
+  el.classList.add('sel'); if(isSurvey) el.classList.add('survey');
+  el.querySelector('.opt-n').style.background = isSurvey?'var(--accent2)':'var(--accent)';
+  el.querySelector('.opt-n').style.borderColor = isSurvey?'var(--accent2)':'var(--accent)';
+  answers[activeItem.questions[currentQ].id]=origIdx; updateDots();
+}
+function selectOX(el,val) {
+  el.parentElement.querySelectorAll('.ox-btn').forEach(b=>b.className='ox-btn');
+  el.classList.add(val==='O'?'o':'x');
+  answers[activeItem.questions[currentQ].id]=val; updateDots();
+}
+function selectScale(el,n,qid) {
+  el.parentElement.querySelectorAll('.scale-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel'); answers[qid]=n; updateDots();
+}
+
+function nextQ() { if(currentQ<activeItem.questions.length-1){currentQ++;renderQ();} }
+function prevQ() { if(currentQ>0){currentQ--;renderQ();} }
+
+function renderDots() {
+  const isSurvey=activeItem.mode==='survey';
+  document.getElementById('footer-dots').innerHTML=activeItem.questions.map((_,i)=>
+    `<div class="dot ${i===0?'current'+(isSurvey?' survey':''):''}" onclick="jumpTo(${i})" title="${i+1}번"></div>`
+  ).join('');
+}
+function updateDots() {
+  const isSurvey=activeItem.mode==='survey';
+  document.querySelectorAll('.dot').forEach((d,i)=>{
+    const q=activeItem.questions[i];
+    const ans=answers[q?.id];
+    const answered = ans!==undefined && ans!=='';
+    d.className='dot';
+    if(answered) d.classList.add('answered'+(isSurvey?' survey':''));
+    if(i===currentQ) d.classList.add('current'+(isSurvey?' survey':''));
+  });
+}
+function jumpTo(i){currentQ=i;renderQ();}
+
+function openSubmitModal() {
+  const unanswered=activeItem.questions.filter(q=>answers[q.id]===undefined||answers[q.id]==='').length;
+  document.querySelectorAll('.dot').forEach((d,i)=>{ if(answers[activeItem.questions[i]?.id]===undefined||answers[activeItem.questions[i]?.id]==='') d.classList.add('warn-dot'); });
+  document.getElementById('submit-desc').textContent = unanswered>0
+    ? `${unanswered}문항을 아직 풀지 않았습니다. 그래도 제출하시겠습니까?`
+    : '모든 문항에 답했습니다. 제출하시겠습니까?';
+  document.getElementById('submit-modal').classList.add('open');
+}
+function confirmSubmit() {
+  closeModalById('submit-modal'); clearInterval(timerInterval); examStarted=false;
+  doSubmit();
+}
+
+function doSubmit() {
+  const isSurvey=activeItem.mode==='survey';
+  let score=0,ok=0,ng=0,pend=0;
+  const items2=[];
+
+  activeItem.questions.forEach(q=>{
+    if(isSurvey||q.type==='scale'||q.type==='essay') {
+      pend++; items2.push({q:q.text,ok:null,mine:String(answers[q.id]||'(미작성)'),type:q.type});
+    } else if(q.type==='multiple') {
+      const correct=String(answers[q.id])===String(q.answer);
+      if(correct){score+=q.score;ok++;}else ng++;
+      items2.push({q:q.text,ok:correct,mine:q.options[answers[q.id]]??'미응답',right:q.options[parseInt(q.answer)],type:q.type,expl:q.explanation});
+    } else if(q.type==='ox') {
+      const correct=answers[q.id]===q.answer;
+      if(correct){score+=q.score;ok++;}else ng++;
+      items2.push({q:q.text,ok:correct,mine:answers[q.id]??'미응답',right:q.answer,type:q.type});
+    } else if(q.type==='short') {
+      const correct=(answers[q.id]||'').toLowerCase().replace(/\s/g,'')===q.answer.toLowerCase().replace(/\s/g,'');
+      if(correct){score+=q.score;ok++;}else ng++;
+      items2.push({q:q.text,ok:correct,mine:answers[q.id]??'미응답',right:q.answer,type:q.type});
+    }
+  });
+
+  showResult(score,ok,ng,pend,items2,isSurvey);
+}
+
+function showResult(score,ok,ng,pend,itemList,isSurvey) {
+  showView('result');
+  const totalScore=activeItem.questions.reduce((a,q)=>a+(q.score||0),0)||100;
+
+  document.getElementById('view-result').className='view active'+(isSurvey?' survey-result':'');
+  document.getElementById('res-score').textContent = isSurvey ? '✓' : score;
+  document.getElementById('res-score').className   = 'score-num'+(isSurvey?' survey':'');
+  document.getElementById('res-total').textContent = isSurvey ? '제출 완료' : `/ ${totalScore}점`;
+  document.getElementById('res-name').textContent  = examineeName+' 님';
+
+  const grade = isSurvey ? '응답해주셔서 감사합니다!' : score>=90?'🎉 우수합니다!':score>=70?'👍 수고하셨습니다!':'💪 다음엔 더 잘할 수 있어요!';
+  document.getElementById('res-grade').textContent=grade;
+  document.getElementById('rs-ok').textContent  = isSurvey ? '—' : ok+'개';
+  document.getElementById('rs-ng').textContent  = isSurvey ? '—' : ng+'개';
+  document.getElementById('rs-pend').textContent= pend+'개';
+
+  if(!isSurvey) {
+    setTimeout(()=>{ document.getElementById('score-circle').style.strokeDashoffset=351.9*(1-score/totalScore); },100);
+  } else {
+    document.getElementById('score-circle').style.stroke='var(--accent2)';
+    setTimeout(()=>{ document.getElementById('score-circle').style.strokeDashoffset=0; },100);
+  }
+
+  document.getElementById('answer-list').innerHTML=itemList.map((r,i)=>{
+    let iconClass='',icon='';
+    if(r.ok===true){iconClass='ic-ok';icon='✓';}
+    else if(r.ok===false){iconClass='ic-ng';icon='✕';}
+    else if(isSurvey){iconClass='ic-sub';icon='✎';}
+    else{iconClass='ic-pend';icon='✎';}
+
+    let detail=`내 답변: ${r.mine}`;
+    if(r.ok===false&&r.right) detail+=` &nbsp;·&nbsp; <span class="ans-correct">정답: ${r.right}</span>`;
+    if(r.ok===false&&r.expl) detail+=`<br><span style="color:var(--dim);font-size:11px;">💡 ${r.expl}</span>`;
+    if(r.ok===null&&!isSurvey) detail+=` &nbsp;·&nbsp; <span style="color:var(--accent2)">관리자 채점 예정</span>`;
+    if(isSurvey) detail=`응답: ${r.mine}`;
+
+    return `<div class="ans-item"><div class="ans-icon ${iconClass}">${icon}</div>
+      <div class="ans-body"><div class="ans-q">Q${i+1}. ${r.q}</div><div class="ans-detail">${detail}</div></div></div>`;
+  }).join('');
+
+  document.getElementById('result-footer-msg').textContent = isSurvey
+    ? '응답이 저장되었습니다. 감사합니다.'
+    : (pend>0?'서술형 문항은 관리자 채점 후 최종 점수가 업데이트됩니다.':'');
+}
+
+// ══ INIT ══
+renderAll();
 </script>
 </body>
 </html>
