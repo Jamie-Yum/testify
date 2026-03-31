@@ -113,6 +113,20 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
 .sb-footer{margin-top:auto;padding:14px 16px;border-top:1px solid var(--border);}
 .sb-back{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;cursor:pointer;transition:color .15s;}
 .sb-back:hover{color:var(--text);}
+.sb-main-btn{
+  display:flex;align-items:center;gap:8px;
+  margin:14px 12px 0;
+  padding:9px 14px;
+  background:rgba(212,240,96,.07);
+  border:1px solid rgba(212,240,96,.18);
+  border-radius:var(--rs);
+  color:var(--accent);
+  font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .15s;
+  font-family:'Pretendard',sans-serif;
+}
+.sb-main-btn:hover{background:rgba(212,240,96,.14);border-color:rgba(212,240,96,.35);}
+.sb-main-btn-icon{font-size:11px;}
 
 /* ══ PANELS ══ */
 .panel{display:none;animation:fadeUp .3s ease;}
@@ -475,6 +489,85 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
 @media print{body::after{content:"이 시험은 인쇄할 수 없습니다.";position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:24px;z-index:9999;}.view{display:none!important;}}
+
+/* ══ RESULTS LIST ══ */
+.result-list { display:flex; flex-direction:column; gap:10px; }
+.result-list-item {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r); padding:18px 20px;
+  display:flex; align-items:center; gap:16px;
+  cursor:pointer; transition:all .2s;
+}
+.result-list-item:hover { border-color:var(--border2); transform:translateX(4px); }
+.result-list-item .rli-type {
+  width:36px; height:36px; border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; flex-shrink:0;
+}
+.rli-type.exam  { background:rgba(212,240,96,.1); }
+.rli-type.survey{ background:rgba(96,196,240,.1); }
+.result-list-item .rli-body { flex:1; }
+.rli-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+.rli-meta  { font-size:12px; color:var(--muted); display:flex; gap:14px; }
+.rli-arrow { color:var(--dim); font-size:16px; transition:all .2s; }
+.result-list-item:hover .rli-arrow { color:var(--text); transform:translateX(2px); }
+.result-detail { display:none; }
+.result-detail.active { display:block; animation:fadeUp .3s ease; }
+.result-list-view { display:block; }
+.result-list-view.hidden { display:none; }
+.result-back-row {
+  display:flex; align-items:center; gap:10px; margin-bottom:20px;
+}
+.result-back-btn {
+  display:flex; align-items:center; gap:6px;
+  color:var(--muted); font-size:13px; cursor:pointer;
+  background:var(--surface2); border:1px solid var(--border);
+  padding:7px 14px; border-radius:var(--rs);
+  transition:all .15s; font-family:Pretendard,sans-serif; font-weight:500;
+}
+.result-back-btn:hover { color:var(--text); border-color:var(--border2); }
+.empty-state {
+  text-align:center; padding:48px 20px;
+  color:var(--muted); font-size:14px;
+}
+.empty-state-icon { font-size:36px; margin-bottom:12px; }
+
+/* ══ ADMIN PREVIEW BANNER ══ */
+.preview-banner {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 9999;
+  background: rgba(212,240,96,.12);
+  border-bottom: 1px solid rgba(212,240,96,.3);
+  padding: 9px 20px;
+  align-items: center;
+  justify-content: space-between;
+  backdrop-filter: blur(8px);
+  font-size: 13px;
+}
+.preview-banner.show { display: flex; }
+.preview-banner-left {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--accent); font-weight: 600;
+}
+.preview-banner-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent);
+  animation: blink 1.4s infinite;
+}
+.preview-back-btn {
+  background: var(--accent); color: #111; border: none;
+  padding: 6px 16px; border-radius: 6px;
+  font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: Pretendard, sans-serif;
+  transition: background .15s;
+}
+.preview-back-btn:hover { background: #c8e050; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+
+/* 배너가 있을 때 intro/exam/result 카드 상단 패딩 보정 */
+.preview-offset { margin-top: 42px; }
 </style>
 </head>
 <body>
@@ -496,8 +589,8 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
       </div>
       <div class="landing-card exam-card" onclick="goExaminee()">
         <div class="lc-icon">📝</div>
-        <div class="lc-title">시험 · 설문 응시</div>
-        <div class="lc-desc">링크를 받았다면<br>여기서 입장하세요</div>
+        <div class="lc-title">시험 · 설문 화면 확인</div>
+        <div class="lc-desc">응시자 입장에서는<br>어떻게 보이는지 확인해보세요</div>
         <div class="lc-arrow">→</div>
       </div>
     </div>
@@ -511,6 +604,7 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
 <div id="view-admin" class="view">
   <nav class="sidebar">
     <div class="sb-logo">TEST<span>IFY</span> <span class="sb-badge">관리자</span></div>
+    <button class="sb-main-btn" onclick="goLanding()"><span class="sb-main-btn-icon">←</span> 메인화면으로 돌아가기</button>
     <div class="nav-section">메인</div>
     <div class="nav-item active" data-panel="dashboard"><span class="nav-icon">◈</span>대시보드</div>
 
@@ -695,26 +789,41 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
 
     <!-- RESULTS -->
     <div id="panel-results" class="panel">
-      <div class="ph">
-        <div><div class="ph-title">결과 분석</div><div class="ph-sub">2월 제품 교육 평가 — 응시자 4명</div></div>
-        <button class="btn btn-accent" onclick="downloadResultExcel()">📥 엑셀 다운로드</button>
+
+      <!-- 목록 뷰 -->
+      <div id="results-list-view" class="result-list-view">
+        <div class="ph">
+          <div><div class="ph-title">결과 분석</div><div class="ph-sub">시험 또는 설문을 선택하세요</div></div>
+        </div>
+        <div id="results-item-list" class="result-list"></div>
       </div>
-      <div class="stats-3 mb-16">
-        <div class="stat"><div class="stat-label">평균 점수</div><div class="stat-val c-accent">78점</div></div>
-        <div class="stat"><div class="stat-label">최고 점수</div><div class="stat-val c-blue">95점</div></div>
-        <div class="stat"><div class="stat-label">최저 점수</div><div class="stat-val c-pink">55점</div></div>
+
+      <!-- 상세 뷰 -->
+      <div id="results-detail-view" class="result-detail">
+        <div class="result-back-row">
+          <button class="result-back-btn" onclick="showResultsList()">← 목록으로</button>
+          <div style="font-size:13px;color:var(--muted);" id="result-detail-breadcrumb">결과 분석</div>
+        </div>
+        <div class="ph">
+          <div>
+            <div class="ph-title" id="result-detail-title">시험명</div>
+            <div class="ph-sub" id="result-detail-sub">응시자 0명</div>
+          </div>
+          <button class="btn btn-accent" onclick="downloadResultExcel()">📥 엑셀 다운로드</button>
+        </div>
+        <div class="stats-3 mb-16">
+          <div class="stat"><div class="stat-label">평균 점수</div><div class="stat-val c-accent" id="rd-avg">—</div></div>
+          <div class="stat"><div class="stat-label">최고 점수</div><div class="stat-val c-blue"  id="rd-max">—</div></div>
+          <div class="stat"><div class="stat-label">최저 점수</div><div class="stat-val c-pink"  id="rd-min">—</div></div>
+        </div>
+        <div class="rtable-wrap">
+          <table class="rtable">
+            <thead><tr><th>이름</th><th>제출 시각</th><th>소요 시간</th><th>점수</th><th>서술형</th><th></th></tr></thead>
+            <tbody id="result-detail-tbody"></tbody>
+          </table>
+        </div>
       </div>
-      <div class="rtable-wrap">
-        <table class="rtable">
-          <thead><tr><th>이름</th><th>제출 시각</th><th>소요 시간</th><th>점수</th><th>서술형</th><th></th></tr></thead>
-          <tbody>
-            <tr><td style="font-weight:600;">김민지</td><td style="color:var(--muted);">14:23</td><td style="color:var(--muted);">22분</td><td><span class="spill sp-hi">95점</span></td><td><span class="spill sp-pend">채점 대기</span></td><td><button class="btn btn-xs btn-outline" onclick="openGrading('김민지')">채점하기</button></td></tr>
-            <tr><td style="font-weight:600;">이준혁</td><td style="color:var(--muted);">14:31</td><td style="color:var(--muted);">28분</td><td><span class="spill sp-hi">88점</span></td><td><span class="spill sp-hi">채점 완료</span></td><td><button class="btn btn-xs btn-outline">상세보기</button></td></tr>
-            <tr><td style="font-weight:600;">박서연</td><td style="color:var(--muted);">14:18</td><td style="color:var(--muted);">18분</td><td><span class="spill sp-mid">72점</span></td><td><span class="spill sp-pend">채점 대기</span></td><td><button class="btn btn-xs btn-outline" onclick="openGrading('박서연')">채점하기</button></td></tr>
-            <tr><td style="font-weight:600;">최동우</td><td style="color:var(--muted);">14:45</td><td style="color:var(--accent3);">⏱ 시간초과</td><td><span class="spill sp-lo">55점</span></td><td><span class="spill sp-pend">채점 대기</span></td><td><button class="btn btn-xs btn-outline" onclick="openGrading('최동우')">채점하기</button></td></tr>
-          </tbody>
-        </table>
-      </div>
+
     </div>
 
     <!-- PROGRESS -->
@@ -732,6 +841,15 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
       </div>
     </div>
   </main>
+</div>
+
+<!-- ══ ADMIN PREVIEW BANNER ══ -->
+<div id="preview-banner" class="preview-banner">
+  <div class="preview-banner-left">
+    <div class="preview-banner-dot"></div>
+    관리자 미리보기 모드 — 실제 응시자 화면입니다
+  </div>
+  <button class="preview-back-btn" onclick="exitPreview()">← 메인화면으로 돌아가기</button>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -884,6 +1002,71 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
 let items = JSON.parse(localStorage.getItem('testify_v2') || 'null');
 if (!items) {
   items = [
+    { id:'i_se2025', mode:'exam', title:'SE 역량 평가 — 2025', pw:'SIDIZ25',
+      desc:'SE(Sitting Expert) 역할, 인간공학, 제품 피팅 등 핵심 역량을 평가합니다. 총 20문항, 100점 만점입니다.',
+      time:30, random:0, showResult:true, retake:false, shuffleOpts:true, shuffleQ:false,
+      status:'live', questions:[
+        { id:201, type:'multiple', text:'SE(Sitting Expert)의 역할에 가장 부합하는 설명은 무엇일까요?',
+          options:['시디즈 제품을 전문적으로 판매하는 사람','매장 운영을 관리하는 직원','고객이 스스로 최적의 시팅 솔루션을 선택하도록 돕는 조력자','브랜드 정책을 안내하는 상담원'],
+          answer:'2', score:5, explanation:'SE는 고객의 사용 환경과 니즈를 이해하고, 질문과 체험을 통해 고객이 스스로 적합한 선택을 할 수 있도록 돕는 조력자입니다.' },
+        { id:202, type:'multiple', text:"다음 중 '질문 중심 응대 태도'에 가장 적합한 멘트가 아닌 것은 무엇인가요?",
+          options:['이미 쓰고 계신 제품이 있으신가요?','주로 어떤 분이 사용할 예정인가요?','어떤 환경에서 주로 사용하실 계획인가요?','지금 행사 중이라 이 제품이 좋지 않을까요?'],
+          answer:'3', score:5, explanation:'질문 중심 응대는 제품을 먼저 제안하기보다 고객의 상황과 목적을 이해하기 위한 질문으로 대화를 시작하는 태도입니다.' },
+        { id:203, type:'multiple', text:'고객이 매장에서 여러 제품을 둘러보고 있을 때 가장 적절한 SE의 태도는 무엇입니까?',
+          options:['즉시 다가가 제품 설명을 시작한다','구매 목적을 먼저 묻는다','고객의 행동을 관찰하며 필요할 때 개입한다','매장 정책을 먼저 안내한다'],
+          answer:'2', score:5, explanation:'과도한 개입이나 방치가 아닌, 고객의 행동을 관찰하다가 개입이 필요해 보이는 순간에 자연스럽게 개입하는 것이 중요합니다.' },
+        { id:204, type:'multiple', text:'다음 중 SE가 지향해야 할 응대 방식이 아닌 것은 무엇입니까?',
+          options:['고객 경험 중심','질문을 통한 니즈 파악','즉각적인 제품 추천','체험을 통한 이해 유도'],
+          answer:'2', score:5, explanation:'고객의 니즈를 충분히 파악하지 않은 상태에서 즉각적으로 제품 추천을 하면 시간이 낭비될 수 있습니다. 초반에 고객 니즈를 파악하는 것이 중요합니다.' },
+        { id:205, type:'multiple', text:'인간공학(Ergonomics)에 대한 설명으로 가장 정확한 것은 무엇입니까?',
+          options:['제품 디자인을 보기 좋게 만드는 학문','인간을 기계에 맞추는 설계 방식','인간의 신체·인지적 특성을 고려해 환경과 도구를 설계하는 학문','산업 현장 안전 관리 기법'],
+          answer:'2', score:5, explanation:'인간공학은 인간의 특성을 기준으로 도구와 환경을 설계하여 효율성과 안전, 편안함을 높이는 학문입니다.' },
+        { id:206, type:'multiple', text:'인간공학이 현대 사회에서 더욱 중요해진 이유로 적절하지 않은 것은 무엇입니까?',
+          options:['디지털 기기 사용 증가','고령화 사회','근골격계 질환 증가','제품 원가 절감'],
+          answer:'3', score:5, explanation:'인간공학은 비용 절감보다는 사용자의 건강과 안전, 삶의 질 향상에 목적이 있습니다.' },
+        { id:207, type:'multiple', text:"'완벽한 자세는 존재하지 않는다'는 관점에서 좋은 의자의 역할은 무엇입니까?",
+          options:['항상 같은 바른 자세를 유지하게 한다','움직임을 제한하여 피로를 줄인다','다양한 자세 변화를 허용하고 각 자세에서 지지를 제공한다','장시간 고정 착석을 유도한다'],
+          answer:'2', score:5, explanation:'인체는 움직이도록 설계되어 있으므로, 의자는 다양한 자세 변화를 자연스럽게 지원해야 합니다.' },
+        { id:208, type:'ox', text:'인간공학적 의자는 사용자의 움직임을 최소화할수록 좋다.',
+          answer:'X', score:5, explanation:'정적인 자세를 오래 유지하는 것은 오히려 피로와 근골격계 문제를 유발할 수 있습니다.' },
+        { id:209, type:'multiple', text:'싱크로나이즈드 틸팅이 인간공학적인 이유는 무엇입니까?',
+          options:['등판만 움직이기 때문','좌판이 고정되기 때문','등판과 좌판이 인체 움직임 비율에 맞춰 함께 움직이기 때문','무릎을 들어 올리기 때문'],
+          answer:'2', score:5, explanation:'등판과 좌판이 함께 움직여 인체의 자연스러운 자세 변화를 돕기 때문입니다.' },
+        { id:210, type:'multiple', text:'니(Knee) 틸팅 방식의 주요 단점은 무엇입니까?',
+          options:['틸팅 강도 조절이 어렵다','무릎이 들리며 발이 바닥에서 떨어질 수 있다','등판 각도가 제한된다','디자인 선택 폭이 좁다'],
+          answer:'1', score:5, explanation:'무릎이 들리면 혈액순환이 방해되고 착석 안정성이 떨어질 수 있습니다.' },
+        { id:211, type:'multiple', text:'좌판 포워드 틸트 기능의 주된 목적은 무엇입니까?',
+          options:['디자인 차별화','엉덩이를 뒤로 밀기 위함','고관절 각도를 유지해 척추 후만을 줄이기 위함','좌판 쿠션 보호'],
+          answer:'2', score:5, explanation:'앞으로 숙이는 작업 환경에서도 척추 부담을 줄이기 위한 기능입니다.' },
+        { id:212, type:'multiple', text:'헤드레스트의 인간공학적 역할로 가장 적절한 것은 무엇입니까?',
+          options:['머리를 얹는 용도','경추의 자연스러운 C자 곡선을 지지','휴식을 위한 장식 요소','장시간 고정 지지'],
+          answer:'1', score:5, explanation:'헤드레스트는 머리 무게를 분산시켜 목과 어깨의 긴장을 완화합니다.' },
+        { id:213, type:'multiple', text:'팔걸이 조절 기능이 중요한 이유는 무엇입니까?',
+          options:['팔의 무게가 가볍기 때문','어깨와 손목 부담을 줄이기 위해','디자인 완성도를 높이기 위해','자세를 고정하기 위해'],
+          answer:'1', score:5, explanation:'팔의 무게를 지지하여 어깨와 손목의 부담을 줄여줍니다.' },
+        { id:214, type:'multiple', text:'좌판 깊이 조절이 필요한 이유는 무엇입니까?',
+          options:['디자인 통일을 위해','가격 차이를 만들기 위해','다리 길이에 따른 개인차를 보완하기 위해','좌판 내구성을 높이기 위해'],
+          answer:'2', score:5, explanation:'사용자의 신체 조건에 맞는 착석을 위해 좌판 깊이 조절이 필요합니다.' },
+        { id:215, type:'multiple', text:'럼버 서포트 조절의 핵심 목적은 무엇입니까?',
+          options:['허리를 밀어내기 위해','척추를 일자로 만들기 위해','요추 전만을 유지하기 위해','등판을 고정하기 위해'],
+          answer:'2', score:5, explanation:'요추 전만을 유지함으로써 허리 부담과 디스크 압력을 줄일 수 있습니다.' },
+        { id:216, type:'multiple', text:'피팅 시 가장 먼저 조절해야 할 요소는 무엇입니까?',
+          options:['팔걸이','좌판 높이','헤드레스트','등판 각도'],
+          answer:'1', score:5, explanation:'좌판 높이는 다른 모든 조절의 기준이 되기 때문에 가장 먼저 맞추어야 합니다.' },
+        { id:217, type:'multiple', text:'좌판 높이가 맞지 않을 때 발생할 수 있는 문제는 무엇입니까?',
+          options:['목 통증','다리 저림 및 혈액순환 저하','시야 문제','손목 통증'],
+          answer:'1', score:5, explanation:'좌판이 너무 높으면 허벅지 뒤쪽이 눌려 혈액순환에 문제가 생길 수 있습니다.' },
+        { id:218, type:'multiple', text:'피팅 시 가장 바람직한 안내 방식은 무엇입니까?',
+          options:['SE가 대신 조절한다','설명만 제공한다','고객이 직접 조절하도록 유도한다','조절 없이 착석만 유도한다'],
+          answer:'2', score:5, explanation:'고객이 직접 조절해 보아야 본인에게 맞는 설정을 이해하고 기억할 수 있습니다.' },
+        { id:219, type:'multiple', text:'고객이 말합니다. "다리를 꼬고 앉는 게 더 편한데요?"',
+          options:['편하시면 그대로 앉으셔도 됩니다.','다리를 꼬는 습관은 무조건 고쳐야 합니다.','일시적으로는 편할 수 있지만 장시간에는 부담이 될 수 있어요. 다른 방법을 함께 맞춰볼까요?','그건 개인 습관이라 어쩔 수 없습니다.'],
+          answer:'2', score:5, explanation:'고객의 느낌에 공감하면서도 장기적인 신체 부담을 설명하고 대안을 제시하는 것이 바람직합니다.' },
+        { id:220, type:'multiple', text:'고객이 말합니다. "의자는 좋은데 오래 앉아 있으면 피곤해요."',
+          options:['의자가 맞지 않는 것 같습니다.','장시간 사용은 어떤 의자도 피곤합니다.','의자 기능 조절과 함께 중간중간 움직이는 습관도 중요합니다.','더 비싼 제품을 추천드립니다.'],
+          answer:'2', score:5, explanation:'의자 기능과 함께 올바른 사용 습관을 안내하는 것이 SE의 역할입니다.' },
+      ]
+    },
     { id:'i1', mode:'exam', title:'2월 제품 교육 평가', pw:'SIDIZ25', desc:'2월 제품 교육 내용 평가입니다.', time:30, random:0, showResult:true, retake:false, shuffleOpts:true, shuffleQ:false, status:'live', questions: defaultQuestions() },
     { id:'i2', mode:'survey', title:'신입 OJT 만족도 조사', pw:'', desc:'신입 사원 OJT 경험을 공유해주세요.', time:0, random:0, showResult:false, retake:true, shuffleOpts:false, shuffleQ:false, status:'live', questions: defaultSurveyQ() },
     { id:'i3', mode:'exam', title:'안전 교육 이해도 테스트', pw:'SAFE01', desc:'', time:20, random:0, showResult:true, retake:false, shuffleOpts:true, shuffleQ:false, status:'draft', questions:[] },
@@ -928,32 +1111,118 @@ let tabWarnCount = 0;
 let examStarted = false;
 
 // ══════════════════════════════════════
-// ROUTING
+// ROUTING + HISTORY
 // ══════════════════════════════════════
-function showView(id) {
+
+// 뒤로가기 상태 관리
+// state: { view, panel }
+// view: 'landing' | 'admin' | 'intro' | 'exam-view' | 'result'
+// panel: 'dashboard' | 'exam-list' | 'survey-list' | 'editor' | 'results' | 'progress'
+
+function showView(id, pushHistory = true) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + id).classList.add('active');
+  if (pushHistory) {
+    history.pushState({ view: id, panel: null }, '', '');
+  }
 }
-function goLanding() { showView('landing'); clearInterval(timerInterval); examStarted = false; }
-function goAdmin()    { showView('admin'); renderAll(); }
+
+function goLanding() {
+  clearInterval(timerInterval); examStarted = false;
+  showView('landing');
+}
+function goAdmin() {
+  showView('admin');
+  renderAll();
+}
+let isPreviewMode = false;
+
 function goExaminee() {
-  // 샘플 시험으로 응시자 뷰 진입 (실제론 URL 파라미터로 분기)
+  isPreviewMode = true;
   loadIntro(items.find(i=>i.id==='i1'));
   showView('intro');
+  showPreviewBanner(true);
+}
+
+function exitPreview() {
+  isPreviewMode = false;
+  showPreviewBanner(false);
+  clearInterval(timerInterval);
+  examStarted = false;
+  goLanding();
+}
+
+function showPreviewBanner(show) {
+  const banner = document.getElementById('preview-banner');
+  // intro/exam-view/result 카드에 offset 추가
+  ['intro-card'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('preview-offset', show);
+  });
+  if (show) banner.classList.add('show');
+  else banner.classList.remove('show');
 }
 
 // ══ ADMIN NAV ══
 document.querySelectorAll('.nav-item[data-panel]').forEach(el => {
   el.addEventListener('click', () => nav(el.dataset.panel));
 });
-function nav(panel) {
+
+function nav(panel, pushHistory = true) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('panel-' + panel).classList.add('active');
   document.querySelector(`.nav-item[data-panel="${panel}"]`)?.classList.add('active');
   if (['dashboard','exam-list','survey-list'].includes(panel)) renderAll();
+  if (panel === 'results') { showResultsList(); renderResultsList(); }
   if (panel === 'editor' && !currentId) openNewModal('exam');
+
+  if (pushHistory) {
+    history.pushState({ view: 'admin', panel }, '', '');
+  }
 }
+
+// ══ 뒤로가기 핸들러 ══
+window.addEventListener('popstate', e => {
+  const state = e.state;
+
+  // 히스토리가 없거나 맨 처음이면 랜딩으로
+  if (!state) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-landing').classList.add('active');
+    clearInterval(timerInterval); examStarted = false;
+    return;
+  }
+
+  const { view, panel } = state;
+
+  // 시험 중 뒤로가기 — 무시 (보안)
+  if (examStarted) {
+    history.pushState(state, '', ''); // 상태 유지
+    return;
+  }
+
+  // 뷰 전환
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const targetView = document.getElementById('view-' + view);
+  if (targetView) targetView.classList.add('active');
+
+  // 관리자 패널 복원
+  if (view === 'admin' && panel) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const targetPanel = document.getElementById('panel-' + panel);
+    if (targetPanel) targetPanel.classList.add('active');
+    document.querySelector(`.nav-item[data-panel="${panel}"]`)?.classList.add('active');
+    if (['dashboard','exam-list','survey-list'].includes(panel)) renderAll();
+  }
+
+  // 타이머 정리
+  if (view !== 'exam-view') { clearInterval(timerInterval); examStarted = false; }
+});
+
+// 최초 로드 시 초기 상태 설정
+history.replaceState({ view: 'landing', panel: null }, '', '');
 
 // ══════════════════════════════════════
 // RENDER GRIDS
@@ -997,6 +1266,7 @@ function cardHTML(item) {
     <div class="ec-actions">
       <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();editItem('${item.id}')">편집</button>
       <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();previewExaminee('${item.id}')">미리보기</button>
+      <button class="btn btn-xs btn-outline" style="color:var(--accent2);border-color:rgba(96,196,240,.3);" onclick="event.stopPropagation();goToResult('${item.id}')">결과보기</button>
       <button class="btn btn-xs btn-danger" onclick="event.stopPropagation();askDelete('${item.id}')">삭제</button>
     </div>
   </div>`;
@@ -1264,6 +1534,130 @@ function openGrading(name) {
   document.getElementById('grading-who').textContent=`${name} — Q4. 고객 허리 통증 추천 기능 서술`;
   document.getElementById('grading-modal').classList.add('open');
 }
+// ══════════════════════════════════════
+// RESULTS — 목록 & 상세
+// ══════════════════════════════════════
+
+// 샘플 응시 데이터 (Supabase 연동 전 mock)
+const MOCK_RESPONSES = {
+  'i_se2025': [
+    { name:'김민지',  time:'14:23', duration:'22분',  score:90, hasEssay:false, gradingDone:true  },
+    { name:'이준혁',  time:'14:31', duration:'28분',  score:75, hasEssay:false, gradingDone:true  },
+    { name:'박서연',  time:'14:18', duration:'18분',  score:85, hasEssay:false, gradingDone:true  },
+    { name:'최동우',  time:'14:45', duration:'⏱ 시간초과', score:60, hasEssay:false, gradingDone:true },
+  ],
+  'i1': [
+    { name:'김민지',  time:'14:23', duration:'22분',  score:95, hasEssay:true,  gradingDone:false },
+    { name:'이준혁',  time:'14:31', duration:'28분',  score:88, hasEssay:true,  gradingDone:true  },
+    { name:'박서연',  time:'14:18', duration:'18분',  score:72, hasEssay:true,  gradingDone:false },
+    { name:'최동우',  time:'14:45', duration:'⏱ 시간초과', score:55, hasEssay:true, gradingDone:false },
+  ],
+};
+
+function renderResultsList() {
+  const list = document.getElementById('results-item-list');
+  const allItems = items; // 시험 + 설문 모두
+
+  if (!allItems.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div>시험 또는 설문이 없습니다.</div>';
+    return;
+  }
+
+  list.innerHTML = allItems.map(item => {
+    const isSurvey = item.mode === 'survey';
+    const responses = MOCK_RESPONSES[item.id] || [];
+    const count = responses.length;
+    const icon = isSurvey ? '📊' : '📝';
+    const typeClass = isSurvey ? 'survey' : 'exam';
+    const statusText = { live:'진행중', draft:'임시저장', closed:'마감' }[item.status] || '임시저장';
+    const statusColor = item.status === 'live' ? 'var(--accent3)' : 'var(--muted)';
+
+    return `<div class="result-list-item" onclick="showResultDetail('${item.id}')">
+      <div class="rli-type ${typeClass}">${icon}</div>
+      <div class="rli-body">
+        <div class="rli-title">${item.title}</div>
+        <div class="rli-meta">
+          <span>📋 ${item.questions.length}문항</span>
+          <span>👤 응시자 ${count}명</span>
+          ${item.time ? `<span>⏱ ${item.time}분</span>` : ''}
+          <span style="color:${statusColor};">● ${statusText}</span>
+        </div>
+      </div>
+      <div class="rli-arrow">→</div>
+    </div>`;
+  }).join('');
+}
+
+function goToResult(itemId) {
+  // 결과 분석 패널로 이동 후 해당 시험 상세 바로 열기
+  nav('results');
+  showResultDetail(itemId);
+}
+
+function showResultsList() {
+  document.getElementById('results-list-view').classList.remove('hidden');
+  document.getElementById('results-detail-view').classList.remove('active');
+}
+
+function showResultDetail(itemId) {
+  const item = items.find(i => i.id === itemId);
+  if (!item) return;
+
+  const responses = MOCK_RESPONSES[itemId] || [];
+  const isSurvey = item.mode === 'survey';
+
+  // 헤더
+  document.getElementById('result-detail-title').textContent = item.title;
+  document.getElementById('result-detail-sub').textContent = `응시자 ${responses.length}명`;
+  document.getElementById('result-detail-breadcrumb').textContent = `결과 분석 › ${item.title}`;
+
+  // 통계 (설문은 점수 없음)
+  if (!isSurvey && responses.length) {
+    const scores = responses.map(r => r.score);
+    const avg = Math.round(scores.reduce((a,b)=>a+b,0) / scores.length);
+    document.getElementById('rd-avg').textContent = avg + '점';
+    document.getElementById('rd-max').textContent = Math.max(...scores) + '점';
+    document.getElementById('rd-min').textContent = Math.min(...scores) + '점';
+  } else {
+    document.getElementById('rd-avg').textContent = '—';
+    document.getElementById('rd-max').textContent = '—';
+    document.getElementById('rd-min').textContent = '—';
+  }
+
+  // 응시자 테이블
+  const tbody = document.getElementById('result-detail-tbody');
+  if (!responses.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px;">아직 응시자가 없습니다.</td></tr>';
+  } else {
+    tbody.innerHTML = responses.map(r => {
+      const scoreHTML = isSurvey
+        ? '<span style="color:var(--muted);">—</span>'
+        : (() => {
+            const cls = r.score >= 80 ? 'sp-hi' : r.score >= 60 ? 'sp-mid' : 'sp-lo';
+            return `<span class="spill ${cls}">${r.score}점</span>`;
+          })();
+      const essayHTML = r.hasEssay
+        ? (r.gradingDone
+            ? '<span class="spill sp-hi">채점 완료</span>'
+            : `<button class="btn btn-xs btn-outline" onclick="openGrading('${r.name}')">채점하기</button>`)
+        : '<span style="color:var(--muted);">—</span>';
+
+      return `<tr>
+        <td style="font-weight:600;">${r.name}</td>
+        <td style="color:var(--muted);">${r.time}</td>
+        <td style="color:${r.duration.includes('초과')?'var(--accent3)':'var(--muted)'};">${r.duration}</td>
+        <td>${scoreHTML}</td>
+        <td>${essayHTML}</td>
+        <td><button class="btn btn-xs btn-outline">상세보기</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // 뷰 전환
+  document.getElementById('results-list-view').classList.add('hidden');
+  document.getElementById('results-detail-view').classList.add('active');
+}
+
 function downloadResultExcel() {
   const data=[['이름','제출시각','소요시간','점수','서술형'],['김민지','14:23','22분',95,'대기'],['이준혁','14:31','28분',88,'완료'],['박서연','14:18','18분',72,'대기'],['최동우','14:45','시간초과',55,'대기']];
   const ws=XLSX.utils.aoa_to_sheet(data); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'결과'); XLSX.writeFile(wb,'시험결과.xlsx');
@@ -1377,6 +1771,7 @@ function startExam() {
   renderQ();
   if (activeItem.time > 0) startTimer();
   examStarted = true;
+  if (isPreviewMode) showPreviewBanner(true);
 }
 
 function startTimer() {
@@ -1537,6 +1932,7 @@ function doSubmit() {
 
 function showResult(score,ok,ng,pend,itemList,isSurvey) {
   showView('result');
+  if (isPreviewMode) showPreviewBanner(true);
   const totalScore=activeItem.questions.reduce((a,q)=>a+(q.score||0),0)||100;
 
   document.getElementById('view-result').className='view active'+(isSurvey?' survey-result':'');
