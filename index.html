@@ -21,6 +21,19 @@
   --text:#f0ece4;--muted:#888;--dim:#555;
   --r:12px;--rs:8px;
 }
+/* 라이트 모드 */
+body.light-mode {
+  --bg:#f5f5f0;--surface:#ffffff;--surface2:#f0f0eb;--surface3:#e8e8e2;
+  --border:#ddddd8;--border2:#ccccC6;
+  --text:#1a1a1a;--muted:#666;--dim:#aaa;
+}
+body.light-mode .topbar,
+body.light-mode .exam-footer,
+body.light-mode .prog-bar-wrap { background:rgba(245,245,240,.95); }
+body.light-mode .preview-banner { background:rgba(140,180,20,.1); }
+body.light-mode #view-landing::before { background:radial-gradient(circle,rgba(100,150,0,.08) 0%,transparent 65%); }
+body.light-mode .sidebar { background:var(--surface); }
+body.light-mode .mobile-top-bar { background:rgba(245,245,240,.95); }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
 
@@ -556,6 +569,40 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
 }
 .empty-state-icon { font-size:36px; margin-bottom:12px; }
 
+/* ══ THEME TOGGLE ══ */
+.theme-toggle {
+  position: fixed; top: 14px; right: 16px; z-index: 200;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 20px; padding: 5px 12px;
+  cursor: pointer; font-size: 13px; color: var(--muted);
+  display: flex; align-items: center; gap: 6px;
+  transition: all .2s; font-family: Pretendard, sans-serif;
+  font-weight: 500;
+}
+.theme-toggle:hover { color: var(--text); border-color: var(--border2); }
+
+/* ══ STATUS BADGE TOGGLE ══ */
+.status-select {
+  font-size: 10px; padding: 3px 9px; border-radius: 20px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+  cursor: pointer; border: none; font-family: Pretendard, sans-serif;
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 6px center;
+  padding-right: 20px;
+}
+.status-select.s-live { background-color:rgba(240,96,144,.15); color:var(--accent3); }
+.status-select.s-draft { background-color:rgba(255,255,255,.06); color:var(--muted); }
+.status-select.s-closed { background-color:rgba(255,255,255,.04); color:var(--dim); }
+
+/* ══ DELETE RECORD BTN ══ */
+.btn-del-record {
+  background: none; border: none; color: var(--dim);
+  cursor: pointer; font-size: 13px; padding: 2px 6px;
+  border-radius: 4px; transition: all .15s;
+}
+.btn-del-record:hover { color: var(--accent3); background: rgba(240,96,144,.1); }
+
 /* ══ ADMIN PREVIEW BANNER ══ */
 .preview-banner {
   display: none;
@@ -766,6 +813,11 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
 <!-- ══════════════════════════════════════
      LANDING
 ══════════════════════════════════════ -->
+<!-- 테마 토글 -->
+<button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()">
+  <span id="theme-icon">☀️</span> <span id="theme-label">라이트 모드</span>
+</button>
+
 <div id="view-landing" class="view active">
   <div class="landing-inner">
     <div class="landing-logo">TEST<span>IFY</span></div>
@@ -1005,7 +1057,10 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
             <div class="ph-title" id="result-detail-title">시험명</div>
             <div class="ph-sub" id="result-detail-sub">응시자 0명</div>
           </div>
-          <button class="btn btn-accent" onclick="downloadResultExcel()">📥 엑셀 다운로드</button>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-danger btn-sm" id="btn-clear-all" onclick="clearAllResponses()">🗑 전체 삭제</button>
+            <button class="btn btn-accent" onclick="downloadResultExcel()">📥 엑셀 다운로드</button>
+          </div>
         </div>
         <div class="stats-3 mb-16">
           <div class="stat"><div class="stat-label">평균 점수</div><div class="stat-val c-accent" id="rd-avg">—</div></div>
@@ -1014,7 +1069,7 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
         </div>
         <div class="rtable-wrap">
           <table class="rtable">
-            <thead><tr><th>이름</th><th>제출 시각</th><th>소요 시간</th><th>점수</th><th>서술형</th><th></th></tr></thead>
+            <thead><tr><th>이름</th><th>시작</th><th>제출</th><th>소요</th><th>점수</th><th>서술형</th><th></th></tr></thead>
             <tbody id="result-detail-tbody"></tbody>
           </table>
         </div>
@@ -1464,13 +1519,16 @@ function renderGrid(containerId, list, mode, showAdd) {
 }
 
 function cardHTML(item) {
-  const badgeMap = { live:'badge-live', draft:'badge-draft', closed:'badge-closed' };
-  const badgeTextMap = { live:'진행중', draft:'임시저장', closed:'마감' };
   const typeClass = item.mode === 'exam' ? 'type-exam' : 'type-survey';
+  const statusClass = {live:'s-live',draft:'s-draft',closed:'s-closed'}[item.status]||'s-draft';
   return `<div class="exam-card ${typeClass}">
     <div class="ec-header">
       <div class="ec-title">${item.title}</div>
-      <span class="badge ${badgeMap[item.status]||'badge-draft'}">${badgeTextMap[item.status]||'임시저장'}</span>
+      <select class="status-select ${statusClass}" onchange="changeStatus('${item.id}',this.value,this)" onclick="event.stopPropagation()">
+        <option value="live"  ${item.status==='live'   ?'selected':''}>● 진행중</option>
+        <option value="draft" ${item.status==='draft'  ?'selected':''}>○ 임시저장</option>
+        <option value="closed"${item.status==='closed' ?'selected':''}>✕ 마감</option>
+      </select>
     </div>
     <div class="ec-meta">
       <span>📋 ${item.questions.length}문항</span>
@@ -1755,18 +1813,18 @@ function openGrading(name) {
 // 샘플 응시 데이터 (Supabase 연동 전 mock)
 const MOCK_RESPONSES = {
   'i_se2025': [
-    { name:'김민지',  time:'14:23', duration:'22분',  score:90, hasEssay:false, gradingDone:true,
+    { name:'김민지',  time:'14:23', startTime:'13:58', duration:'22분',  score:90, hasEssay:false, gradingDone:true,
       answers:{201:'2',202:'3',203:'2',204:'2',205:'2',206:'3',207:'2',208:'X',209:'2',210:'1',211:'2',212:'1',213:'1',214:'2',215:'2',216:'1',217:'1',218:'2',219:'2',220:'2'} },
-    { name:'이준혁',  time:'14:31', duration:'28분',  score:75, hasEssay:false, gradingDone:true,
+    { name:'이준혁',  time:'14:31', startTime:'14:01', duration:'28분',  score:75, hasEssay:false, gradingDone:true,
       answers:{201:'0',202:'3',203:'2',204:'2',205:'2',206:'3',207:'1',208:'O',209:'2',210:'1',211:'2',212:'1',213:'1',214:'2',215:'2',216:'1',217:'1',218:'2',219:'2',220:'2'} },
-    { name:'박서연',  time:'14:18', duration:'18분',  score:85, hasEssay:false, gradingDone:true  },
-    { name:'최동우',  time:'14:45', duration:'⏱ 시간초과', score:60, hasEssay:false, gradingDone:true },
+    { name:'박서연',  time:'14:18', startTime:'13:57', duration:'18분',  score:85, hasEssay:false, gradingDone:true  },
+    { name:'최동우',  time:'14:45', startTime:'14:13', duration:'⏱ 시간초과', score:60, hasEssay:false, gradingDone:true },
   ],
   'i1': [
-    { name:'김민지',  time:'14:23', duration:'22분',  score:95, hasEssay:true,  gradingDone:false },
-    { name:'이준혁',  time:'14:31', duration:'28분',  score:88, hasEssay:true,  gradingDone:true  },
-    { name:'박서연',  time:'14:18', duration:'18분',  score:72, hasEssay:true,  gradingDone:false },
-    { name:'최동우',  time:'14:45', duration:'⏱ 시간초과', score:55, hasEssay:true, gradingDone:false },
+    { name:'김민지',  time:'14:23', startTime:'13:58', duration:'22분',  score:95, hasEssay:true,  gradingDone:false },
+    { name:'이준혁',  time:'14:31', startTime:'14:01', duration:'28분',  score:88, hasEssay:true,  gradingDone:true  },
+    { name:'박서연',  time:'14:18', startTime:'13:57', duration:'18분',  score:72, hasEssay:true,  gradingDone:false },
+    { name:'최동우',  time:'14:45', startTime:'14:13', duration:'⏱ 시간초과', score:55, hasEssay:true, gradingDone:false },
   ],
 };
 
@@ -1904,6 +1962,7 @@ function showResultsList() {
 }
 
 function showResultDetail(itemId) {
+  currentDetailItemId = itemId;
   const item = items.find(i => i.id === itemId);
   if (!item) return;
 
@@ -1949,11 +2008,15 @@ function showResultDetail(itemId) {
       const rIdx = responses.indexOf(r);
       return `<tr>
         <td style="font-weight:600;">${r.name}</td>
+        <td style="color:var(--muted);">${r.startTime||'—'}</td>
         <td style="color:var(--muted);">${r.time}</td>
         <td style="color:${r.duration.includes('초과')?'var(--accent3)':'var(--muted)'};">${r.duration}</td>
         <td>${scoreHTML}</td>
         <td>${essayHTML}</td>
-        <td><button class="btn btn-xs btn-outline" onclick="openResponseDetail('${itemId}',${rIdx})">상세보기</button></td>
+        <td style="display:flex;gap:6px;align-items:center;">
+          <button class="btn btn-xs btn-outline" onclick="openResponseDetail('${itemId}',${rIdx})">상세보기</button>
+          <button class="btn-del-record" onclick="deleteResponse('${itemId}',${rIdx})" title="기록 삭제">🗑</button>
+        </td>
       </tr>`;
     }).join('');
   }
@@ -2279,6 +2342,52 @@ function showResult(score,ok,ng,pend,itemList,isSurvey) {
   document.getElementById('result-footer-msg').textContent = isSurvey
     ? '응답이 저장되었습니다. 감사합니다.'
     : (pend>0?'서술형 문항은 관리자 채점 후 최종 점수가 업데이트됩니다.':'');
+}
+
+// ══ 테마 토글 ══
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-mode');
+  localStorage.setItem('testify_theme', isLight ? 'light' : 'dark');
+  document.getElementById('theme-icon').textContent  = isLight ? '🌙' : '☀️';
+  document.getElementById('theme-label').textContent = isLight ? '다크 모드' : '라이트 모드';
+}
+// 저장된 테마 복원
+(function(){
+  if (localStorage.getItem('testify_theme') === 'light') {
+    document.body.classList.add('light-mode');
+    document.getElementById('theme-icon').textContent  = '🌙';
+    document.getElementById('theme-label').textContent = '다크 모드';
+  }
+})();
+
+// ══ 상태 변경 ══
+function changeStatus(itemId, newStatus, selectEl) {
+  const item = items.find(i => i.id === itemId);
+  if (!item) return;
+  item.status = newStatus;
+  save();
+  // select 색상 업데이트
+  selectEl.className = 'status-select ' + ({live:'s-live',draft:'s-draft',closed:'s-closed'}[newStatus]||'s-draft');
+  renderAll();
+}
+
+// ══ 응시 기록 삭제 ══
+let currentDetailItemId = null;
+
+function deleteResponse(itemId, idx) {
+  if (!confirm('이 응시 기록을 삭제할까요?')) return;
+  if (MOCK_RESPONSES[itemId]) {
+    MOCK_RESPONSES[itemId].splice(idx, 1);
+    showResultDetail(itemId); // 새로고침
+  }
+}
+
+function clearAllResponses() {
+  if (!currentDetailItemId) return;
+  const item = items.find(i => i.id === currentDetailItemId);
+  if (!confirm(`"${item?.title}" 의 모든 응시 기록을 삭제할까요? 복구할 수 없습니다.`)) return;
+  MOCK_RESPONSES[currentDetailItemId] = [];
+  showResultDetail(currentDetailItemId);
 }
 
 // ══ INIT ══
