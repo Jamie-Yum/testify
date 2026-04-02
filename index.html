@@ -540,6 +540,8 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 
+.rtab-content { animation: fadeUp .25s ease; }
+
 /* ══ 설문 문항 분석 ══ */
 .sq-chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;margin-bottom:12px;}
 .sq-chart-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;}
@@ -941,11 +943,9 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
       <span class="nav-icon">◫</span>설문 목록
       <span class="type-dot dot-survey" style="margin-left:auto;"></span>
     </div>
-    <div class="nav-item" data-panel="editor"><span class="nav-icon">✏</span>편집기</div>
 
     <div class="nav-section">결과</div>
-    <div class="nav-item" data-panel="results"><span class="nav-icon">◉</span>결과 분석</div>
-    <div class="nav-item" data-panel="progress"><span class="nav-icon">↗</span>응시자 진도</div>
+    <div class="nav-item" data-panel="results"><span class="nav-icon">◉</span>결과 & 진도</div>
 
     <div class="sb-footer">
       <div class="sb-back" onclick="goLanding()">← 메인으로</div>
@@ -1061,6 +1061,11 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
           <div class="toggle-row"><div><div class="tgl-label">재시험 허용</div><div class="tgl-desc">동일 링크로 재응시 가능</div></div><button class="tgl" id="tgl-retake" onclick="this.classList.toggle('on')"></button></div>
           <div class="toggle-row" id="tgl-row-shuffle"><div><div class="tgl-label">보기 순서 랜덤</div><div class="tgl-desc">객관식 보기를 응시자마다 다르게 섞기</div></div><button class="tgl on" id="tgl-shuffle" onclick="this.classList.toggle('on')"></button></div>
           <div class="toggle-row"><div><div class="tgl-label">문제 순서 랜덤</div><div class="tgl-desc">응시자마다 문제 순서 다르게</div></div><button class="tgl" id="tgl-qshuffle" onclick="this.classList.toggle('on')"></button></div>
+          <div class="fg" style="margin-top:20px;">
+            <label class="fl">응시자 명단 (줄바꿈으로 구분)</label>
+            <textarea class="fi" id="f-roster" rows="5" placeholder="홍길동&#10;김철수&#10;이영희"></textarea>
+            <div style="font-size:12px;color:var(--muted);margin-top:5px;">이름을 등록하면 결과 & 진도에서 미응시자를 확인할 수 있습니다.</div>
+          </div>
         </div>
       </div>
 
@@ -1133,7 +1138,7 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
       <!-- 목록 뷰 -->
       <div id="results-list-view" class="result-list-view">
         <div class="ph">
-          <div><div class="ph-title">결과 분석</div><div class="ph-sub">시험 또는 설문을 선택하세요</div></div>
+          <div><div class="ph-title">결과 & 진도</div><div class="ph-sub">시험 또는 설문을 선택하세요</div></div>
         </div>
         <div id="results-item-list" class="result-list"></div>
       </div>
@@ -1142,7 +1147,7 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
       <div id="results-detail-view" class="result-detail">
         <div class="result-back-row">
           <button class="result-back-btn" onclick="showResultsList()">← 목록으로</button>
-          <div style="font-size:13px;color:var(--muted);" id="result-detail-breadcrumb">결과 분석</div>
+          <div style="font-size:13px;color:var(--muted);" id="result-detail-breadcrumb">결과 & 진도</div>
         </div>
         <div class="ph">
           <div>
@@ -1154,43 +1159,43 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
             <button class="btn btn-accent" onclick="downloadResultExcel()">📥 엑셀 다운로드</button>
           </div>
         </div>
-        <div class="stats-3 mb-16">
-          <div class="stat"><div class="stat-label">평균 점수</div><div class="stat-val c-accent" id="rd-avg">—</div></div>
-          <div class="stat"><div class="stat-label">최고 점수</div><div class="stat-val c-blue"  id="rd-max">—</div></div>
-          <div class="stat"><div class="stat-label">최저 점수</div><div class="stat-val c-pink"  id="rd-min">—</div></div>
+
+        <!-- 결과/진도 탭 -->
+        <div class="etabs" style="margin-bottom:24px;">
+          <div class="etab active" data-rtab="scores">📊 점수 결과</div>
+          <div class="etab" data-rtab="progress">👥 응시 진도</div>
         </div>
-        <!-- 설문 문항별 분석 (설문 모드일 때만 표시) -->
-        <div id="survey-analysis-section" style="display:none;margin-bottom:24px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-            <div class="sec-label" style="margin-bottom:0;">문항별 분석</div>
-            <button class="btn btn-sm btn-outline" id="btn-ai-summarize" onclick="runAiSummary()">✦ AI 요약 생성</button>
+
+        <!-- 점수 결과 탭 -->
+        <div id="rtab-scores" class="rtab-content">
+          <div class="stats-3 mb-16">
+            <div class="stat"><div class="stat-label">평균 점수</div><div class="stat-val c-accent" id="rd-avg">—</div></div>
+            <div class="stat"><div class="stat-label">최고 점수</div><div class="stat-val c-blue"  id="rd-max">—</div></div>
+            <div class="stat"><div class="stat-label">최저 점수</div><div class="stat-val c-pink"  id="rd-min">—</div></div>
           </div>
-          <div id="survey-question-charts"></div>
+          <!-- 설문 문항별 분석 (설문 모드일 때만 표시) -->
+          <div id="survey-analysis-section" style="display:none;margin-bottom:24px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div class="sec-label" style="margin-bottom:0;">문항별 분석</div>
+              <button class="btn btn-sm btn-outline" id="btn-ai-summarize" onclick="runAiSummary()">✦ AI 요약 생성</button>
+            </div>
+            <div id="survey-question-charts"></div>
+          </div>
+          <div class="rtable-wrap">
+            <table class="rtable">
+              <thead><tr><th>이름</th><th>시작</th><th>제출</th><th>소요</th><th>점수</th><th>서술형</th><th></th></tr></thead>
+              <tbody id="result-detail-tbody"></tbody>
+            </table>
+          </div>
         </div>
 
-        <div class="rtable-wrap">
-          <table class="rtable">
-            <thead><tr><th>이름</th><th>시작</th><th>제출</th><th>소요</th><th>점수</th><th>서술형</th><th></th></tr></thead>
-            <tbody id="result-detail-tbody"></tbody>
-          </table>
+        <!-- 응시 진도 탭 -->
+        <div id="rtab-progress" class="rtab-content" style="display:none;">
+          <div id="progress-detail-wrap"></div>
         </div>
+
       </div>
 
-    </div>
-
-    <!-- PROGRESS -->
-    <div id="panel-progress" class="panel">
-      <div class="ph">
-        <div><div class="ph-title">응시자 진도</div><div class="ph-sub">실시간 응시 현황</div></div>
-        <button class="btn btn-outline" onclick="alert('Supabase 연동 후 실시간 업데이트됩니다.')">↻ 새로고침</button>
-      </div>
-      <div class="notice mb-16">실시간 진도는 Supabase 연동 후 자동 업데이트됩니다. 현재는 샘플 데이터입니다.</div>
-      <div class="progress-grid">
-        <div class="progress-card"><div class="pc-name">김민지</div><div class="pc-bar-wrap"><div class="pc-bar" style="width:75%"></div></div><div class="pc-meta"><span>15 / 20 문항</span><span style="color:var(--accent);">진행 중</span></div></div>
-        <div class="progress-card"><div class="pc-name">이준혁</div><div class="pc-bar-wrap"><div class="pc-bar" style="width:100%"></div></div><div class="pc-meta"><span>20 / 20 문항</span><span style="color:var(--muted);">제출 완료</span></div></div>
-        <div class="progress-card"><div class="pc-name">박서연</div><div class="pc-bar-wrap"><div class="pc-bar" style="width:40%"></div></div><div class="pc-meta"><span>8 / 20 문항</span><span style="color:var(--accent);">진행 중</span></div></div>
-        <div class="progress-card"><div class="pc-name">최동우</div><div class="pc-bar-wrap"><div class="pc-bar" style="width:0%"></div></div><div class="pc-meta"><span>미접속</span><span style="color:var(--dim);">대기 중</span></div></div>
-      </div>
     </div>
   </main>
 </div>
@@ -1546,7 +1551,7 @@ function nav(panel, pushHistory = true) {
   document.getElementById('panel-' + panel).classList.add('active');
   document.querySelector(`.nav-item[data-panel="${panel}"]`)?.classList.add('active');
   if (['dashboard','exam-list','survey-list'].includes(panel)) renderAll();
-  if (panel === 'results') { showResultsList(); renderResultsList(); } // async 자동처리
+  if (panel === 'results') { showResultsList(); renderResultsList(); }
   if (panel === 'editor' && !currentId) openNewModal('exam');
 
   if (pushHistory) {
@@ -1705,7 +1710,7 @@ function cardHTML(item) {
       ${item.time ? `<span>⏱ ${item.time}분</span>` : ''}
     </div>
     <div class="ec-actions">
-      
+      <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();editItem('${item.id}')">편집</button>
       <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();previewExaminee('${item.id}')">시험보기</button>
       <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();openShare('${item.id}')">공유</button>
       <button class="btn btn-xs btn-outline" style="color:var(--accent2);border-color:rgba(96,196,240,.3);" onclick="event.stopPropagation();goToResult('${item.id}')">결과보기</button>
@@ -1759,6 +1764,7 @@ function loadEditorFields(item) {
   document.getElementById('tgl-retake').className  = 'tgl' + (item.retake?' on':'');
   document.getElementById('tgl-shuffle').className = 'tgl' + (item.shuffleOpts?' on':'');
   document.getElementById('tgl-qshuffle').className= 'tgl' + (item.shuffleQ?' on':'');
+  document.getElementById('f-roster').value = (item.roster || []).join('\n');
   setEditorMode(item.mode);
   renderQList(item.questions, item.mode);
   updateSharePanel(item);
@@ -1790,10 +1796,13 @@ function saveItem(draft) {
   item.shuffleOpts= document.getElementById('tgl-shuffle').classList.contains('on');
   item.shuffleQ   = document.getElementById('tgl-qshuffle').classList.contains('on');
   item.status = draft ? 'draft' : 'live';
+  // 응시자 명단
+  const rosterRaw = document.getElementById('f-roster').value;
+  item.roster = rosterRaw.split('\n').map(s => s.trim()).filter(Boolean);
   save();
   updateSharePanel(item);
   document.getElementById('editor-title').textContent = item.title;
-  saveItemToDB(item); // DB 저장
+  saveItemToDB(item);
   alert(draft ? '임시저장 완료!' : '배포 완료! 링크를 공유하세요.');
 }
 
@@ -2113,6 +2122,111 @@ async function runAiSummary() {
   btn.textContent = '✦ AI 요약 재생성';
 }
 
+
+// ══ 결과 탭 전환 ══
+document.querySelectorAll('.etab[data-rtab]').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.etab[data-rtab]').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    const tab = el.dataset.rtab;
+    document.getElementById('rtab-scores').style.display   = tab === 'scores'   ? '' : 'none';
+    document.getElementById('rtab-progress').style.display = tab === 'progress' ? '' : 'none';
+    if (tab === 'progress') renderProgressTab();
+  });
+});
+
+async function renderProgressTab() {
+  const wrap = document.getElementById('progress-detail-wrap');
+  if (!wrap || !currentDetailItemId) return;
+
+  const item = items.find(i => i.id === currentDetailItemId);
+  if (!item) return;
+
+  const responses = window._cachedResponses?.[currentDetailItemId] || await loadResponsesFromDB(currentDetailItemId);
+  window._cachedResponses = window._cachedResponses || {};
+  window._cachedResponses[currentDetailItemId] = responses;
+
+  const roster = item.roster || [];
+  const submittedNames = responses.map(r => r.name);
+
+  // 명단 있는 경우
+  const rosterSubmitted  = roster.filter(n => submittedNames.includes(n));
+  const rosterPending    = roster.filter(n => !submittedNames.includes(n));
+  // 명단 없이 제출한 사람 (명단 미등록)
+  const unlistedSubmitted = submittedNames.filter(n => !roster.includes(n));
+
+  const totalRoster = roster.length;
+  const submitCount = submittedNames.length;
+  const rate = totalRoster > 0 ? Math.round(submittedNames.filter(n => roster.includes(n)).length / totalRoster * 100) : null;
+
+  let html = '';
+
+  // 상단 통계
+  html += `<div class="stats-3 mb-16">
+    <div class="stat"><div class="stat-label">제출 완료</div><div class="stat-val c-accent">${submitCount}명</div></div>
+    <div class="stat"><div class="stat-label">미응시</div><div class="stat-val c-pink">${rosterPending.length}명</div></div>
+    <div class="stat"><div class="stat-label">응시율</div><div class="stat-val">${rate !== null ? rate + '%' : '—'}</div></div>
+  </div>`;
+
+  // 명단이 없을 때
+  if (!roster.length) {
+    html += `<div class="notice" style="margin-bottom:16px;">
+      응시자 명단을 등록하면 미응시자를 확인할 수 있습니다.<br>
+      <span style="font-size:12px;">편집 → 기본 설정 탭에서 명단을 입력하세요.</span>
+    </div>`;
+  }
+
+  // 제출 완료
+  if (submittedNames.length) {
+    html += `<div class="sec-label" style="margin-bottom:10px;">✅ 제출 완료 (${submitCount}명)</div>
+    <div class="progress-grid" style="margin-bottom:24px;">
+      ${responses.map(r => {
+        const isSurvey = item.mode === 'survey';
+        const scoreText = isSurvey ? '설문 제출' : r.score + '점';
+        const scoreColor = isSurvey ? 'var(--accent2)' : (r.score >= 80 ? 'var(--accent)' : r.score >= 60 ? 'var(--accent2)' : 'var(--accent3)');
+        return `<div class="progress-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="pc-name">${r.name}</div>
+            <div style="font-size:13px;font-weight:700;color:${scoreColor};">${scoreText}</div>
+          </div>
+          <div class="pc-bar-wrap" style="margin:8px 0 4px;">
+            <div class="pc-bar" style="width:100%;background:var(--accent2);"></div>
+          </div>
+          <div class="pc-meta"><span>${r.time || '—'} 제출</span><span style="color:var(--muted);">${r.duration}</span></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  // 미응시 (명단 있을 때만)
+  if (rosterPending.length) {
+    html += `<div class="sec-label" style="margin-bottom:10px;">⏳ 미응시 (${rosterPending.length}명)</div>
+    <div class="progress-grid" style="margin-bottom:24px;">
+      ${rosterPending.map(name => `
+        <div class="progress-card" style="opacity:.65;">
+          <div class="pc-name">${name}</div>
+          <div class="pc-bar-wrap" style="margin:8px 0 4px;">
+            <div class="pc-bar" style="width:0%;"></div>
+          </div>
+          <div class="pc-meta"><span style="color:var(--dim);">아직 응시하지 않음</span></div>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  // 명단 외 제출자 (명단 있고, 명단 외 제출자 있을 때)
+  if (roster.length && unlistedSubmitted.length) {
+    html += `<div class="sec-label" style="margin-bottom:10px;color:var(--dim);">📋 명단 외 응시자 (${unlistedSubmitted.length}명)</div>
+    <div class="progress-grid">
+      ${unlistedSubmitted.map(name => `
+        <div class="progress-card">
+          <div class="pc-name">${name}</div>
+          <div class="pc-meta" style="margin-top:6px;"><span style="color:var(--muted);">명단에 없는 응시자</span></div>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  wrap.innerHTML = html;
+}
 
 // ══ RESULTS ══
 function openGrading(name) {
