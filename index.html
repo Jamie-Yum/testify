@@ -8,7 +8,7 @@
 <meta property="og:title" content="TESTIFY — 시디즈 사내 시험 플랫폼">
 <meta property="og:description" content="출제부터 결과 분석까지, 시디즈 전용 시험 플랫폼">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://jamie-yum.github.io/TESTIFY/og-image.png">
+<meta property="og:image" content="https://jamie-yum.github.io/testify/og-image.png">
 <meta name="theme-color" content="#003EFF">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23003EFF'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='18' font-weight='bold' fill='white' text-anchor='middle'%3ET%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23003EFF'/%3E%3Ctext x='90' y='130' font-family='Georgia,serif' font-size='110' font-weight='bold' fill='white' text-anchor='middle'%3ET%3C/text%3E%3C/svg%3E">
@@ -1678,7 +1678,7 @@ function confirmDelete() {
 
 // ══ SHARE ══
 function updateSharePanel(item) {
-  const base = 'https://jamie-yum.github.io/TESTIFY/';
+  const base = 'https://jamie-yum.github.io/testify/';
   document.getElementById('share-url-exam').textContent  = `${base}?test=${item.id}`;
   document.getElementById('share-url-admin').textContent = `${base}?admin=${item.id}`;
   document.getElementById('share-pw-display').textContent = item.pw || '(없음 — 공개)';
