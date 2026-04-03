@@ -544,6 +544,27 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
 
 .rtab-content { animation: fadeUp .25s ease; }
 
+/* ══ 검토 페이지 ══ */
+.review-page { display:none; animation:fadeUp .3s ease; }
+.review-page.active { display:block; }
+.review-page-header { background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 28px;margin-bottom:16px; }
+.review-stat-row { display:flex;gap:16px;margin-top:12px;flex-wrap:wrap; }
+.review-stat { display:flex;align-items:center;gap:6px;font-size:13px; }
+.review-stat-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+.review-q-item { background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;margin-bottom:10px;cursor:pointer;transition:all .2s; }
+.review-q-item:hover { border-color:var(--border2);transform:translateX(3px); }
+.review-q-item.unanswered { border-color:rgba(240,96,144,.35);background:rgba(240,96,144,.03); }
+.review-q-header { display:flex;align-items:center;gap:10px;margin-bottom:8px; }
+.review-q-num { width:24px;height:24px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0; }
+.review-q-num.answered { background:var(--accent);color:#fff; }
+.review-q-num.answered.survey { background:var(--accent2); }
+.review-q-num.unanswered { background:rgba(240,96,144,.15);color:var(--accent3); }
+.review-q-text { font-size:13px;font-weight:600;flex:1;line-height:1.4; }
+.review-q-answer { font-size:13px;color:var(--muted);padding:8px 12px;background:var(--surface2);border-radius:var(--rs);line-height:1.55; }
+.review-q-answer.has-answer { color:var(--text); }
+.review-q-answer.no-answer { color:var(--accent3);font-style:italic; }
+.review-nav { display:flex;gap:10px;justify-content:flex-end;margin-top:20px; }
+
 /* ══ 설문 문항 분석 ══ */
 .sq-chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;margin-bottom:12px;}
 .sq-chart-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;}
@@ -1257,7 +1278,24 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
   </div>
   <div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
   <div class="exam-body">
-    <div class="exam-shell"><div id="q-container"></div></div>
+    <div class="exam-shell">
+      <div id="q-container"></div>
+      <div id="review-page" class="review-page">
+        <div class="review-page-header">
+          <div style="font-size:17px;font-weight:700;letter-spacing:-.3px;">📋 제출 전 검토</div>
+          <div style="font-size:13px;color:var(--muted);margin-top:4px;">문항을 클릭하면 해당 문항으로 이동합니다.</div>
+          <div class="review-stat-row">
+            <div class="review-stat"><div class="review-stat-dot" style="background:var(--accent);"></div><span id="rv-answered-cnt" style="color:var(--text);font-weight:600;"></span> 응답 완료</div>
+            <div class="review-stat"><div class="review-stat-dot" style="background:var(--accent3);"></div><span id="rv-unanswered-cnt" style="color:var(--accent3);font-weight:600;"></span> 미응답</div>
+          </div>
+        </div>
+        <div id="review-list"></div>
+        <div class="review-nav">
+          <button class="btn-nav btn-prev" onclick="exitReview()">← 돌아가기</button>
+          <button class="btn-nav" id="review-submit-btn" onclick="openSubmitModal()">제출하기</button>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="exam-footer">
     <div class="footer-dots" id="footer-dots"></div>
@@ -2784,9 +2822,9 @@ function renderQ() {
   const isSurvey2 = activeItem.mode === 'survey';
   const numBadgeClass = 'q-num-badge' + (isSurvey?' survey':'');
   const prevBtn = currentQ === 0 ? '' : `<button class="btn-nav btn-prev" onclick="prevQ()">← 이전</button>`;
-  const nextBtnClass = 'btn-nav ' + (isLast ? 'btn-submit-btn' : (isSurvey2 ? 'btn-next-survey' : 'btn-next-exam'));
-  const nextBtnText = isLast ? '제출하기' : '다음 →';
-  const nextBtnAction = isLast ? 'openSubmitModal()' : 'nextQ()';
+  const nextBtnClass = 'btn-nav ' + (isLast ? (isSurvey2?'btn-next-survey':'btn-next-exam') : (isSurvey2?'btn-next-survey':'btn-next-exam'));
+  const nextBtnText = isLast ? '검토하기 →' : '다음 →';
+  const nextBtnAction = isLast ? 'openReview()' : 'nextQ()';
 
   document.getElementById('q-container').innerHTML=`
     <div class="q-card">
@@ -2813,6 +2851,69 @@ function renderQ() {
 function updateCnt(id) {
   const ta=document.getElementById('essay-'+id); const cnt=document.getElementById('cnt-'+id);
   if(ta&&cnt) cnt.textContent=ta.value.length+'자';
+}
+
+function openReview() {
+  const isSurvey = activeItem.mode === 'survey';
+  const qs = activeItem.questions;
+
+  // 통계
+  const answeredCount = qs.filter(q => answers[q.id] !== undefined && answers[q.id] !== '').length;
+  const unansweredCount = qs.length - answeredCount;
+  document.getElementById('rv-answered-cnt').textContent = answeredCount;
+  document.getElementById('rv-unanswered-cnt').textContent = unansweredCount;
+
+  // 제출 버튼 색상
+  const submitBtn = document.getElementById('review-submit-btn');
+  submitBtn.className = 'btn-nav ' + (isSurvey ? 'btn-next-survey' : 'btn-submit-btn');
+
+  // 문항 목록 렌더
+  const typeLabel = {multiple:'객관식',ox:'O / X',short:'단답형',essay:'서술형',scale:'척도'};
+  document.getElementById('review-list').innerHTML = qs.map((q, i) => {
+    const ans = answers[q.id];
+    const hasAnswer = ans !== undefined && ans !== '' && ans !== null;
+    let ansText = '미응답';
+    if (hasAnswer) {
+      if (q.type === 'multiple') {
+        const order = shuffledOpts[q.id] || q.options.map((_,i)=>i);
+        const dispIdx = order.indexOf(ans);
+        ansText = `${dispIdx+1}. ${q.options[ans]}`;
+      } else if (q.type === 'ox') {
+        ansText = ans;
+      } else if (q.type === 'scale') {
+        ansText = ans + '점';
+      } else {
+        ansText = String(ans).length > 60 ? String(ans).slice(0,60) + '…' : String(ans);
+      }
+    }
+    const numClass = hasAnswer ? ('answered' + (isSurvey?' survey':'')) : 'unanswered';
+    const itemClass = hasAnswer ? '' : ' unanswered';
+    return `<div class="review-q-item${itemClass}" onclick="jumpToQ(${i})">
+      <div class="review-q-header">
+        <div class="review-q-num ${numClass}">${i+1}</div>
+        <div class="review-q-text">${q.text.length>60?q.text.slice(0,60)+'…':q.text}</div>
+        <span style="font-size:11px;color:var(--dim);flex-shrink:0;">${typeLabel[q.type]||q.type}</span>
+      </div>
+      <div class="review-q-answer ${hasAnswer?'has-answer':'no-answer'}">${hasAnswer ? ansText : '아직 응답하지 않았습니다'}</div>
+    </div>`;
+  }).join('');
+
+  // 화면 전환
+  document.getElementById('q-container').style.display = 'none';
+  document.getElementById('review-page').classList.add('active');
+  document.getElementById('prog-bar').style.width = '100%';
+  window.scrollTo(0, 0);
+}
+
+function exitReview() {
+  document.getElementById('review-page').classList.remove('active');
+  document.getElementById('q-container').style.display = '';
+  renderQ();
+}
+
+function jumpToQ(i) {
+  currentQ = i;
+  exitReview();
 }
 function selectOpt(el,origIdx) {
   el.closest('.opts').querySelectorAll('.opt').forEach(b => {
