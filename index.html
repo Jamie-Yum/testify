@@ -2505,6 +2505,7 @@ async function showResultDetail(itemId) {
             const cls = r.score >= 80 ? 'sp-hi' : r.score >= 60 ? 'sp-mid' : 'sp-lo';
             return `<span class="spill ${cls}">${r.score}점</span>`;
           })();
+      const rIdx = responses.indexOf(r);
       const essayQs = item.questions.filter(q => q.type === 'essay');
       const essayHTML = !r.hasEssay
         ? '<span style="color:var(--muted);">—</span>'
@@ -2513,8 +2514,6 @@ async function showResultDetail(itemId) {
           : essayQs.map(q =>
               `<button class="btn btn-xs btn-outline" style="margin-bottom:2px;" onclick="openGrading(${rIdx},${q.id})">Q채점: ${q.text.slice(0,10)}…</button>`
             ).join('');
-
-      const rIdx = responses.indexOf(r);
       return `<tr>
         <td style="font-weight:600;">${r.name}</td>
         <td style="color:var(--muted);">${r.startTime||'—'}</td>
