@@ -2284,7 +2284,7 @@ async function confirmGrading() {
   // DB 업데이트
   if (window.sb && r.id) {
     try {
-      await sb.from('responses').update({ score: newScore }).eq('id', r.id);
+      await sb.from('sidiz_responses').update({ score: newScore }).eq('id', r.id);
       console.log('✅ 채점 반영:', r.name, newScore + '점');
     } catch(e) {
       console.warn('채점 DB 저장 실패:', e.message);
@@ -2339,7 +2339,7 @@ async function renderResultsList() {
   // 응시자 수 한 번에 조회
   if (window.sb) {
     try {
-      const { data: counts } = await sb.from('responses')
+      const { data: counts } = await sb.from('sidiz_responses')
         .select('exam_id');
       const countMap = {};
       (counts || []).forEach(r => {
@@ -2897,10 +2897,10 @@ function showResult(score,ok,ng,pend,itemList,isSurvey) {
 async function loadExamsFromDB() {
   if (!window.sb) { console.warn('Supabase 미연결'); return; }
   try {
-    const { data: examsData, error: e1 } = await sb.from('exams').select('*').order('created_at', { ascending: false });
+    const { data: examsData, error: e1 } = await sb.from('sidiz_exams').select('*').order('created_at', { ascending: false });
     if (e1) { console.warn('exams load error:', e1.message); return; }
 
-    const { data: questionsData, error: e2 } = await sb.from('questions').select('*').order('sort_order');
+    const { data: questionsData, error: e2 } = await sb.from('sidiz_questions').select('*').order('sort_order');
     if (e2) { console.warn('questions load error:', e2.message); return; }
 
     if (!examsData || examsData.length === 0) {
@@ -2923,6 +2923,7 @@ async function loadExamsFromDB() {
       shuffleOpts: e.shuffle_options,
       shuffleQ: e.shuffle_questions,
       status: e.status,
+      roster: e.roster || [],
       questions: questionsData
         .filter(q => q.exam_id === e.id)
         .sort((a, b) => a.sort_order - b.sort_order)
@@ -2954,7 +2955,7 @@ async function syncLocalToDB() {
   if (!window.sb) return;
   try {
     for (const item of items) {
-      await sb.from('exams').upsert({
+      await sb.from('sidiz_exams').upsert({
         id: item.id,
         mode: item.mode,
         title: item.title,
@@ -2971,7 +2972,7 @@ async function syncLocalToDB() {
 
       for (let i = 0; i < item.questions.length; i++) {
         const q = item.questions[i];
-        await sb.from('questions').upsert({
+        await sb.from('sidiz_questions').upsert({
           exam_id: item.id,
           sort_order: i,
           type: q.type,
@@ -2994,7 +2995,7 @@ async function syncLocalToDB() {
 async function saveItemToDB(item) {
   if (!window.sb) return;
   try {
-    await sb.from('exams').upsert({
+    await sb.from('sidiz_exams').upsert({
       id: item.id,
       mode: item.mode,
       title: item.title,
@@ -3007,13 +3008,14 @@ async function saveItemToDB(item) {
       shuffle_options: item.shuffleOpts,
       shuffle_questions: item.shuffleQ,
       status: item.status,
+      roster: item.roster || [],
     });
 
     // 기존 문항 삭제 후 재저장
-    await sb.from('questions').delete().eq('exam_id', item.id);
+    await sb.from('sidiz_questions').delete().eq('exam_id', item.id);
     for (let i = 0; i < item.questions.length; i++) {
       const q = item.questions[i];
-      await sb.from('questions').insert({
+      await sb.from('sidiz_questions').insert({
         exam_id: item.id,
         sort_order: i,
         type: q.type,
@@ -3035,7 +3037,7 @@ async function saveItemToDB(item) {
 async function deleteItemFromDB(itemId) {
   if (!window.sb) return;
   try {
-    await sb.from('exams').delete().eq('id', itemId);
+    await sb.from('sidiz_exams').delete().eq('id', itemId);
     console.log('✅ DB 삭제 완료:', itemId);
   } catch (err) {
     console.warn('DB 삭제 실패:', err.message);
@@ -3046,7 +3048,7 @@ async function deleteItemFromDB(itemId) {
 async function saveResponseToDB(examId, name, answers, score, startTime, durationSecs, tabWarnings) {
   if (!window.sb) return;
   try {
-    const { error } = await sb.from('responses').insert({
+    const { error } = await sb.from('sidiz_responses').insert({
       exam_id: examId,
       examinee_name: name,
       answers: answers,
@@ -3067,7 +3069,7 @@ async function saveResponseToDB(examId, name, answers, score, startTime, duratio
 async function loadResponsesFromDB(examId) {
   if (!window.sb) return [];
   try {
-    const { data, error } = await sb.from('responses')
+    const { data, error } = await sb.from('sidiz_responses')
       .select('*')
       .eq('exam_id', examId)
       .order('submitted_at', { ascending: true });
@@ -3102,7 +3104,7 @@ async function loadResponsesFromDB(examId) {
 async function deleteResponseFromDB(responseId) {
   if (!window.sb) return;
   try {
-    await sb.from('responses').delete().eq('id', responseId);
+    await sb.from('sidiz_responses').delete().eq('id', responseId);
     console.log('✅ 응시 기록 삭제:', responseId);
   } catch (err) {
     console.warn('응시 기록 삭제 실패:', err.message);
