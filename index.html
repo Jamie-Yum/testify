@@ -1311,15 +1311,23 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
 
 <!-- MODALS -->
 <div class="modal-bg" id="grading-modal">
-  <div class="modal">
-    <div class="modal-title">서술형 채점</div>
-    <div class="modal-sub" id="grading-who">김민지 — Q4</div>
-    <div style="background:var(--surface2);border-radius:var(--rs);padding:13px;font-size:13px;line-height:1.7;margin-bottom:14px;">"허리 통증 고객에게는 요추지지대와 좌판 틸팅 잠금 기능을 추천합니다..."</div>
-    <div class="ai-box"><div class="ai-label">🤖 AI 분석 결과</div><div style="font-size:13px;line-height:1.7;">유사도 <strong style="color:var(--accent)">87%</strong> — 핵심 키워드: 요추지지대 ✓ 틸팅 ✓ S자 곡선 ✓<br><span style="color:var(--muted);">제안 점수: <strong style="color:var(--accent)">17~18점 / 20점</strong></span></div></div>
-    <div class="fg"><label class="fl">최종 점수</label><input class="fi fi-inline" type="number" value="18" style="width:100px;" /></div>
+  <div class="modal" style="width:520px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <div class="modal-title">서술형 채점</div>
+      <button onclick="closeModalById('grading-modal')" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;">×</button>
+    </div>
+    <div class="modal-sub" id="grading-who" style="margin-bottom:14px;"></div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:6px;">모범 답안</div>
+    <div id="grading-model-answer" style="background:rgba(53,127,255,.05);border:1px solid rgba(53,127,255,.15);border-radius:var(--rs);padding:12px 14px;font-size:13px;line-height:1.7;color:var(--muted);margin-bottom:14px;"></div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:6px;">응시자 답변</div>
+    <div id="grading-response" style="background:var(--surface2);border-radius:var(--rs);padding:12px 14px;font-size:13px;line-height:1.7;margin-bottom:14px;"></div>
+    <div class="fg">
+      <label class="fl">부여 점수 (배점: <span id="grading-max-score">0</span>점)</label>
+      <input class="fi fi-inline" type="number" id="grading-score-input" min="0" style="width:100px;" />
+    </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModalById('grading-modal')">취소</button>
-      <button class="btn btn-accent" onclick="closeModalById('grading-modal')">채점 완료</button>
+      <button class="btn btn-accent" onclick="confirmGrading()">채점 완료</button>
     </div>
   </div>
 </div>
@@ -2229,9 +2237,66 @@ async function renderProgressTab() {
 }
 
 // ══ RESULTS ══
-function openGrading(name) {
-  document.getElementById('grading-who').textContent=`${name} — Q4. 고객 허리 통증 추천 기능 서술`;
+let _gradingContext = null; // { responseId, responseIdx, questionId, maxScore, currentScore }
+
+function openGrading(responseIdx, questionId) {
+  const item = items.find(i => i.id === currentDetailItemId);
+  if (!item) return;
+  const responses = window._cachedResponses?.[currentDetailItemId] || [];
+  const r = responses[responseIdx];
+  const q = item.questions.find(q => String(q.id) === String(questionId));
+  if (!r || !q) return;
+
+  _gradingContext = {
+    responseIdx,
+    responseId: r.id,
+    questionId,
+    maxScore: q.score || 0,
+    itemId: currentDetailItemId,
+  };
+
+  document.getElementById('grading-who').textContent = `${r.name} — ${q.text.slice(0,30)}${q.text.length>30?'…':''}`;
+  document.getElementById('grading-model-answer').textContent = q.modelAnswer || '(모범 답안 없음)';
+  document.getElementById('grading-response').textContent = r.answers?.[questionId] || '(미작성)';
+  document.getElementById('grading-max-score').textContent = q.score || 0;
+  document.getElementById('grading-score-input').value = '';
+  document.getElementById('grading-score-input').max = q.score || 0;
   document.getElementById('grading-modal').classList.add('open');
+}
+
+async function confirmGrading() {
+  if (!_gradingContext) return;
+  const scoreInput = parseInt(document.getElementById('grading-score-input').value);
+  if (isNaN(scoreInput) || scoreInput < 0 || scoreInput > _gradingContext.maxScore) {
+    alert(`0 ~ ${_gradingContext.maxScore}점 사이로 입력해주세요.`);
+    return;
+  }
+
+  const responses = window._cachedResponses?.[_gradingContext.itemId] || [];
+  const r = responses[_gradingContext.responseIdx];
+  if (!r) return;
+
+  // 기존 점수에 서술형 점수 더하기
+  const newScore = (r.score || 0) + scoreInput;
+  r.score = newScore;
+  r.gradingDone = true;
+
+  // DB 업데이트
+  if (window.sb && r.id) {
+    try {
+      await sb.from('responses').update({ score: newScore }).eq('id', r.id);
+      console.log('✅ 채점 반영:', r.name, newScore + '점');
+    } catch(e) {
+      console.warn('채점 DB 저장 실패:', e.message);
+    }
+  }
+
+  closeModalById('grading-modal');
+  const gradedItemId = _gradingContext.itemId;
+  _gradingContext = null;
+
+  // 결과 화면 새로고침
+  showResultDetail(gradedItemId);
 }
 // ══════════════════════════════════════
 // RESULTS — 목록 & 상세
@@ -2274,7 +2339,7 @@ async function renderResultsList() {
   // 응시자 수 한 번에 조회
   if (window.sb) {
     try {
-      const { data: counts } = await sb.from('sidiz_responses')
+      const { data: counts } = await sb.from('responses')
         .select('exam_id');
       const countMap = {};
       (counts || []).forEach(r => {
@@ -2440,11 +2505,14 @@ async function showResultDetail(itemId) {
             const cls = r.score >= 80 ? 'sp-hi' : r.score >= 60 ? 'sp-mid' : 'sp-lo';
             return `<span class="spill ${cls}">${r.score}점</span>`;
           })();
-      const essayHTML = r.hasEssay
-        ? (r.gradingDone
-            ? '<span class="spill sp-hi">채점 완료</span>'
-            : `<button class="btn btn-xs btn-outline" onclick="openGrading('${r.name}')">채점하기</button>`)
-        : '<span style="color:var(--muted);">—</span>';
+      const essayQs = item.questions.filter(q => q.type === 'essay');
+      const essayHTML = !r.hasEssay
+        ? '<span style="color:var(--muted);">—</span>'
+        : r.gradingDone
+          ? '<span class="spill sp-hi">채점 완료</span>'
+          : essayQs.map(q =>
+              `<button class="btn btn-xs btn-outline" style="margin-bottom:2px;" onclick="openGrading(${rIdx},${q.id})">Q채점: ${q.text.slice(0,10)}…</button>`
+            ).join('');
 
       const rIdx = responses.indexOf(r);
       return `<tr>
@@ -2685,11 +2753,16 @@ function updateCnt(id) {
   if(ta&&cnt) cnt.textContent=ta.value.length+'자';
 }
 function selectOpt(el,origIdx) {
-  el.closest('.opts').querySelectorAll('.opt').forEach(b=>b.classList.remove('sel','survey'));
+  el.closest('.opts').querySelectorAll('.opt').forEach(b => {
+    b.classList.remove('sel','survey');
+    const n = b.querySelector('.opt-n');
+    if (n) { n.style.background = ''; n.style.borderColor = ''; n.style.color = ''; }
+  });
   const isSurvey=activeItem.mode==='survey';
   el.classList.add('sel'); if(isSurvey) el.classList.add('survey');
-  el.querySelector('.opt-n').style.background = isSurvey?'var(--accent2)':'var(--accent)';
+  el.querySelector('.opt-n').style.background  = isSurvey?'var(--accent2)':'var(--accent)';
   el.querySelector('.opt-n').style.borderColor = isSurvey?'var(--accent2)':'var(--accent)';
+  el.querySelector('.opt-n').style.color = '#fff';
   answers[activeItem.questions[currentQ].id]=origIdx; updateDots();
 }
 function selectOX(el,val) {
@@ -2824,10 +2897,10 @@ function showResult(score,ok,ng,pend,itemList,isSurvey) {
 async function loadExamsFromDB() {
   if (!window.sb) { console.warn('Supabase 미연결'); return; }
   try {
-    const { data: examsData, error: e1 } = await sb.from('sidiz_exams').select('*').order('created_at', { ascending: false });
+    const { data: examsData, error: e1 } = await sb.from('exams').select('*').order('created_at', { ascending: false });
     if (e1) { console.warn('exams load error:', e1.message); return; }
 
-    const { data: questionsData, error: e2 } = await sb.from('sidiz_questions').select('*').order('sort_order');
+    const { data: questionsData, error: e2 } = await sb.from('questions').select('*').order('sort_order');
     if (e2) { console.warn('questions load error:', e2.message); return; }
 
     if (!examsData || examsData.length === 0) {
@@ -2881,7 +2954,7 @@ async function syncLocalToDB() {
   if (!window.sb) return;
   try {
     for (const item of items) {
-      await sb.from('sidiz_exams').upsert({
+      await sb.from('exams').upsert({
         id: item.id,
         mode: item.mode,
         title: item.title,
@@ -2898,7 +2971,7 @@ async function syncLocalToDB() {
 
       for (let i = 0; i < item.questions.length; i++) {
         const q = item.questions[i];
-        await sb.from('sidiz_questions').upsert({
+        await sb.from('questions').upsert({
           exam_id: item.id,
           sort_order: i,
           type: q.type,
@@ -2921,7 +2994,7 @@ async function syncLocalToDB() {
 async function saveItemToDB(item) {
   if (!window.sb) return;
   try {
-    await sb.from('sidiz_exams').upsert({
+    await sb.from('exams').upsert({
       id: item.id,
       mode: item.mode,
       title: item.title,
@@ -2937,10 +3010,10 @@ async function saveItemToDB(item) {
     });
 
     // 기존 문항 삭제 후 재저장
-    await sb.from('sidiz_questions').delete().eq('exam_id', item.id);
+    await sb.from('questions').delete().eq('exam_id', item.id);
     for (let i = 0; i < item.questions.length; i++) {
       const q = item.questions[i];
-      await sb.from('sidiz_questions').insert({
+      await sb.from('questions').insert({
         exam_id: item.id,
         sort_order: i,
         type: q.type,
@@ -2962,7 +3035,7 @@ async function saveItemToDB(item) {
 async function deleteItemFromDB(itemId) {
   if (!window.sb) return;
   try {
-    await sb.from('sidiz_exams').delete().eq('id', itemId);
+    await sb.from('exams').delete().eq('id', itemId);
     console.log('✅ DB 삭제 완료:', itemId);
   } catch (err) {
     console.warn('DB 삭제 실패:', err.message);
@@ -2973,7 +3046,7 @@ async function deleteItemFromDB(itemId) {
 async function saveResponseToDB(examId, name, answers, score, startTime, durationSecs, tabWarnings) {
   if (!window.sb) return;
   try {
-    const { error } = await sb.from('sidiz_responses').insert({
+    const { error } = await sb.from('responses').insert({
       exam_id: examId,
       examinee_name: name,
       answers: answers,
@@ -2994,7 +3067,7 @@ async function saveResponseToDB(examId, name, answers, score, startTime, duratio
 async function loadResponsesFromDB(examId) {
   if (!window.sb) return [];
   try {
-    const { data, error } = await sb.from('sidiz_responses')
+    const { data, error } = await sb.from('responses')
       .select('*')
       .eq('exam_id', examId)
       .order('submitted_at', { ascending: true });
@@ -3029,7 +3102,7 @@ async function loadResponsesFromDB(examId) {
 async function deleteResponseFromDB(responseId) {
   if (!window.sb) return;
   try {
-    await sb.from('sidiz_responses').delete().eq('id', responseId);
+    await sb.from('responses').delete().eq('id', responseId);
     console.log('✅ 응시 기록 삭제:', responseId);
   } catch (err) {
     console.warn('응시 기록 삭제 실패:', err.message);
