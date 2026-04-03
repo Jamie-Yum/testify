@@ -249,6 +249,14 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
 .add-card:hover{border-color:var(--accent);color:var(--accent);background:rgba(53,127,255,.03);}
 .add-card.survey-add:hover{border-color:var(--accent2);color:var(--accent2);background:rgba(96,196,240,.03);}
 
+/* 드래그앤드롭 */
+.exam-card.dragging { opacity:.4; cursor:grabbing; }
+.exam-card.drag-over { border-color:var(--accent); background:rgba(53,127,255,.04); transform:scale(1.01); }
+.drag-handle { color:var(--dim); font-size:14px; cursor:grab; padding:2px 6px 2px 0; flex-shrink:0; user-select:none; }
+.drag-handle:hover { color:var(--muted); }
+.result-list-item.dragging { opacity:.4; cursor:grabbing; }
+.result-list-item.drag-over { border-color:var(--accent); background:rgba(53,127,255,.04); }
+
 /* ══ BADGES ══ */
 .badge{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
 .badge-live{background:rgba(240,96,144,.15);color:var(--accent3);}
@@ -1576,6 +1584,65 @@ function showView(id, pushHistory = true) {
   }
 }
 
+// ══════════════════════════════════════
+// 드래그앤드롭 — 시험/설문/결과 목록 순서 변경
+// ══════════════════════════════════════
+let _dragSrcId = null;
+
+function onCardDragStart(e) {
+  _dragSrcId = e.currentTarget.dataset.id;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onCardDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function onCardDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function onCardDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+}
+function onCardDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const targetId = e.currentTarget.dataset.id;
+  if (!_dragSrcId || _dragSrcId === targetId) return;
+
+  const srcIdx = items.findIndex(i => i.id === _dragSrcId);
+  const tgtIdx = items.findIndex(i => i.id === targetId);
+  if (srcIdx === -1 || tgtIdx === -1) return;
+
+  // 배열 순서 변경
+  const [moved] = items.splice(srcIdx, 1);
+  items.splice(tgtIdx, 0, moved);
+
+  // sort_order 업데이트 후 저장
+  items.forEach((item, i) => item.sortOrder = i);
+  save();
+  saveSortOrderToDB();
+  renderAll();
+  // 결과 목록이 열려있으면 재렌더
+  if (document.getElementById('panel-results')?.classList.contains('active')) {
+    renderResultsList();
+  }
+}
+
+async function saveSortOrderToDB() {
+  if (!window.sb) return;
+  try {
+    await Promise.all(items.map((item, i) =>
+      sb.from('sidiz_exams').update({ sort_order: i }).eq('id', item.id)
+    ));
+    console.log('✅ 순서 저장 완료');
+  } catch(e) {
+    console.warn('순서 저장 실패:', e.message);
+  }
+}
+
 function confirmClose() {
   document.getElementById('close-modal').classList.add('open');
 }
@@ -1772,8 +1839,15 @@ function renderGrid(containerId, list, mode, showAdd) {
 function cardHTML(item) {
   const typeClass = item.mode === 'exam' ? 'type-exam' : 'type-survey';
   const statusClass = {live:'s-live',draft:'s-draft',closed:'s-closed'}[item.status]||'s-draft';
-  return `<div class="exam-card ${typeClass}" onclick="editItem(\'${item.id}\')">
+  return `<div class="exam-card ${typeClass}" draggable="true" data-id="${item.id}"
+    ondragstart="onCardDragStart(event)"
+    ondragover="onCardDragOver(event)"
+    ondragleave="onCardDragLeave(event)"
+    ondrop="onCardDrop(event)"
+    ondragend="onCardDragEnd(event)"
+    onclick="editItem(\'${item.id}\')">
     <div class="ec-header">
+      <span class="drag-handle" onclick="event.stopPropagation()">⠿</span>
       <div class="ec-title">${item.title}</div>
       <select class="status-select ${statusClass}" onchange="changeStatus('${item.id}',this.value,this)" onclick="event.stopPropagation()">
         <option value="live"  ${item.status==='live'   ?'selected':''}>● 진행중</option>
@@ -2397,7 +2471,13 @@ async function renderResultsList() {
     const typeClass = isSurvey ? 'survey' : 'exam';
     const statusText = { live:'진행중', draft:'임시저장', closed:'마감' }[item.status] || '임시저장';
     const statusColor = item.status === 'live' ? 'var(--accent3)' : 'var(--muted)';
-    return `<div class="result-list-item" onclick="showResultDetail('${item.id}')">
+    return `<div class="result-list-item" draggable="true" data-id="${item.id}"
+      ondragstart="onCardDragStart(event)"
+      ondragover="onCardDragOver(event)"
+      ondragleave="onCardDragLeave(event)"
+      ondrop="onCardDrop(event)"
+      ondragend="onCardDragEnd(event)"
+      onclick="showResultDetail('${item.id}')">
       <div class="rli-type ${typeClass}">${icon}</div>
       <div class="rli-body">
         <div class="rli-title">${item.title}</div>
@@ -2823,7 +2903,7 @@ function renderQ() {
   const numBadgeClass = 'q-num-badge' + (isSurvey?' survey':'');
   const prevBtn = currentQ === 0 ? '' : `<button class="btn-nav btn-prev" onclick="prevQ()">← 이전</button>`;
   const nextBtnClass = 'btn-nav ' + (isLast ? (isSurvey2?'btn-next-survey':'btn-next-exam') : (isSurvey2?'btn-next-survey':'btn-next-exam'));
-  const nextBtnText = isLast ? '검토하기 →' : '다음 →';
+  const nextBtnText = isLast ? '제출 전 검토 →' : '다음 →';
   const nextBtnAction = isLast ? 'openReview()' : 'nextQ()';
 
   document.getElementById('q-container').innerHTML=`
@@ -3088,7 +3168,7 @@ function showResult(score,ok,ng,pend,itemList,isSurvey) {
 async function loadExamsFromDB() {
   if (!window.sb) { console.warn('Supabase 미연결'); return; }
   try {
-    const { data: examsData, error: e1 } = await sb.from('sidiz_exams').select('*').order('created_at', { ascending: false });
+    const { data: examsData, error: e1 } = await sb.from('sidiz_exams').select('*').order('sort_order', { ascending: true });
     if (e1) { console.warn('exams load error:', e1.message); return; }
 
     const { data: questionsData, error: e2 } = await sb.from('sidiz_questions').select('*').order('sort_order');
