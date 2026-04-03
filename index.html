@@ -1068,6 +1068,11 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
             <textarea class="fi" id="f-roster" rows="5" placeholder="홍길동&#10;김철수&#10;이영희"></textarea>
             <div style="font-size:12px;color:var(--muted);margin-top:5px;">이름을 등록하면 결과 & 진도에서 미응시자를 확인할 수 있습니다.</div>
           </div>
+          <div class="fg" id="fg-thank-msg" style="margin-top:8px;display:none;">
+            <label class="fl">설문 완료 감사 메시지</label>
+            <textarea class="fi" id="f-thank-msg" rows="2" placeholder="응답해주셔서 감사합니다. 소중한 의견을 반영하겠습니다."></textarea>
+            <div style="font-size:12px;color:var(--muted);margin-top:5px;">설문 완료 후 응시자에게 보여줄 메시지입니다. 미입력 시 기본 메시지가 표시됩니다.</div>
+          </div>
         </div>
       </div>
 
@@ -1282,14 +1287,21 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
       <div class="result-grade" id="res-grade"></div>
       <div class="result-name-lbl" id="res-name"></div>
     </div>
-    <div class="result-summary">
+    <div class="result-summary" id="result-summary-wrap">
       <div class="rs-item"><div class="rs-label">정답</div><div class="rs-val" id="rs-ok" style="color:var(--accent)">—</div></div>
       <div class="rs-item"><div class="rs-label">오답</div><div class="rs-val" id="rs-ng" style="color:var(--accent3)">—</div></div>
       <div class="rs-item"><div class="rs-label">채점 대기</div><div class="rs-val" id="rs-pend" style="color:var(--accent2)">—</div></div>
     </div>
+    <div class="result-summary" id="survey-summary-wrap" style="display:none;">
+      <div class="rs-item"><div class="rs-label">총 응답 문항</div><div class="rs-val" id="rs-answered" style="color:var(--accent2)">—</div></div>
+      <div class="rs-item"><div class="rs-label">소요시간</div><div class="rs-val" id="rs-duration" style="color:var(--accent2)">—</div></div>
+      <div class="rs-item"><div class="rs-label">응답 완성도</div><div class="rs-val" id="rs-completion" style="color:var(--accent2)">—</div></div>
+    </div>
+    <div id="survey-thank-msg" style="display:none;text-align:center;padding:14px 16px;background:rgba(96,196,240,.06);border:1px solid rgba(96,196,240,.15);border-radius:var(--rs);margin-bottom:16px;font-size:14px;color:var(--text);line-height:1.7;"></div>
     <div class="review-title">문항별 결과</div>
     <div class="answer-list" id="answer-list"></div>
     <div class="result-footer-msg" id="result-footer-msg"></div>
+    <button onclick="confirmClose()" style="width:100%;margin-top:20px;padding:13px;border-radius:var(--rs);border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;font-family:Pretendard,sans-serif;transition:all .15s;" onmouseover="this.style.color='var(--text)';this.style.borderColor='var(--border2)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">나가기</button>
   </div>
 </div>
 
@@ -1330,6 +1342,18 @@ textarea.fi{resize:vertical;min-height:72px;line-height:1.6;}
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModalById('grading-modal')">취소</button>
       <button class="btn btn-accent" onclick="confirmGrading()">채점 완료</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="close-modal">
+  <div class="modal modal-sm">
+    <div style="font-size:28px;margin-bottom:12px;">👋</div>
+    <div class="modal-title">브라우저를 닫으시겠어요?</div>
+    <div class="modal-sub">응시 결과는 이미 저장되었습니다.</div>
+    <div class="modal-footer">
+      <button class="mbtn mbtn-cancel" onclick="closeModalById('close-modal')">아니오</button>
+      <button class="mbtn mbtn-confirm" style="background:var(--accent);" onclick="window.close()">예, 닫기</button>
     </div>
   </div>
 </div>
@@ -1512,6 +1536,10 @@ function showView(id, pushHistory = true) {
   if (pushHistory) {
     history.pushState({ view: id, panel: null }, '', '');
   }
+}
+
+function confirmClose() {
+  document.getElementById('close-modal').classList.add('open');
 }
 
 function goLanding() {
@@ -1721,7 +1749,7 @@ function cardHTML(item) {
     </div>
     <div class="ec-actions">
       <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();editItem('${item.id}')">편집</button>
-      <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();previewExaminee('${item.id}')">시험보기</button>
+      <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();previewExaminee('${item.id}')">${item.mode === 'survey' ? '설문하기' : '시험보기'}</button>
       <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();openShare('${item.id}')">공유</button>
       <button class="btn btn-xs btn-outline" style="color:var(--accent2);border-color:rgba(96,196,240,.3);" onclick="event.stopPropagation();goToResult('${item.id}')">결과보기</button>
       <button class="btn btn-xs btn-danger" onclick="event.stopPropagation();askDelete('${item.id}')">삭제</button>
@@ -1775,6 +1803,7 @@ function loadEditorFields(item) {
   document.getElementById('tgl-shuffle').className = 'tgl' + (item.shuffleOpts?' on':'');
   document.getElementById('tgl-qshuffle').className= 'tgl' + (item.shuffleQ?' on':'');
   document.getElementById('f-roster').value = (item.roster || []).join('\n');
+  document.getElementById('f-thank-msg').value = item.thankMsg || '';
   setEditorMode(item.mode);
   renderQList(item.questions, item.mode);
   updateSharePanel(item);
@@ -1789,6 +1818,8 @@ function setEditorMode(mode) {
   document.getElementById('btn-add-scale').style.display = mode==='survey'?'':'none';
   // 채점 관련 토글 시각적 구분
   document.getElementById('tgl-row-shuffle').style.display = mode==='exam'?'':'none';
+  // 설문 전용 — 감사 메시지
+  document.getElementById('fg-thank-msg').style.display = mode==='survey'?'':'none';
 }
 
 function getCurrent() { return items.find(i=>i.id===currentId); }
@@ -1809,6 +1840,8 @@ function saveItem(draft) {
   // 응시자 명단
   const rosterRaw = document.getElementById('f-roster').value;
   item.roster = rosterRaw.split('\n').map(s => s.trim()).filter(Boolean);
+  // 감사 메시지 (설문 전용)
+  item.thankMsg = document.getElementById('f-thank-msg').value.trim();
   save();
   updateSharePanel(item);
   document.getElementById('editor-title').textContent = item.title;
@@ -2316,8 +2349,11 @@ async function renderResultsList() {
     return;
   }
 
-  // 일단 카운트 없이 먼저 렌더
-  list.innerHTML = allItems.map(item => {
+  // 시험/설문 분리 렌더
+  const examItems   = allItems.filter(i => i.mode === 'exam');
+  const surveyItems = allItems.filter(i => i.mode === 'survey');
+
+  const renderItems = (itemList) => itemList.map(item => {
     const isSurvey = item.mode === 'survey';
     const icon = isSurvey ? '📊' : '📝';
     const typeClass = isSurvey ? 'survey' : 'exam';
@@ -2337,6 +2373,23 @@ async function renderResultsList() {
       <div class="rli-arrow">→</div>
     </div>`;
   }).join('');
+
+  let html = '';
+  if (examItems.length) {
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;"></div>
+      <div class="sec-label" style="margin-bottom:0;">시험</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px;">${renderItems(examItems)}</div>`;
+  }
+  if (surveyItems.length) {
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--accent2);flex-shrink:0;"></div>
+      <div class="sec-label" style="margin-bottom:0;">설문</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">${renderItems(surveyItems)}</div>`;
+  }
+  list.innerHTML = html;
 
   // 응시자 수 한 번에 조회
   if (window.sb) {
@@ -2864,10 +2917,38 @@ function showResult(score,ok,ng,pend,itemList,isSurvey) {
   document.getElementById('res-name').textContent  = examineeName+' 님';
 
   const grade = isSurvey ? '응답해주셔서 감사합니다!' : score>=90?'🎉 우수합니다!':score>=70?'👍 수고하셨습니다!':'💪 다음엔 더 잘할 수 있어요!';
-  document.getElementById('res-grade').textContent=grade;
-  document.getElementById('rs-ok').textContent  = isSurvey ? '—' : ok+'개';
-  document.getElementById('rs-ng').textContent  = isSurvey ? '—' : ng+'개';
-  document.getElementById('rs-pend').textContent= pend+'개';
+  document.getElementById('res-grade').textContent = grade;
+
+  if (isSurvey) {
+    // 설문 요약
+    document.getElementById('result-summary-wrap').style.display = 'none';
+    document.getElementById('survey-summary-wrap').style.display = '';
+
+    const totalQ = activeItem.questions.length;
+    const answeredQ = Object.keys(answers).filter(k => answers[k] !== '' && answers[k] !== undefined && answers[k] !== null).length;
+    const completionPct = totalQ > 0 ? Math.round(answeredQ / totalQ * 100) : 0;
+    const durationSecs = Math.round((new Date() - (window._examStartedAt || new Date())) / 1000);
+    const durMin = Math.floor(durationSecs / 60);
+    const durSec = durationSecs % 60;
+    const durText = durMin > 0 ? `${durMin}분 ${durSec}초` : `${durSec}초`;
+
+    document.getElementById('rs-answered').textContent = `${answeredQ} / ${totalQ}문항`;
+    document.getElementById('rs-duration').textContent = durText;
+    document.getElementById('rs-completion').textContent = completionPct + '%';
+
+    // 감사 메시지
+    const thankEl = document.getElementById('survey-thank-msg');
+    const customMsg = activeItem.thankMsg || '';
+    thankEl.style.display = '';
+    thankEl.textContent = customMsg || '응답해주셔서 감사합니다. 소중한 의견을 반영하겠습니다.';
+  } else {
+    document.getElementById('result-summary-wrap').style.display = '';
+    document.getElementById('survey-summary-wrap').style.display = 'none';
+    document.getElementById('survey-thank-msg').style.display = 'none';
+    document.getElementById('rs-ok').textContent  = ok+'개';
+    document.getElementById('rs-ng').textContent  = ng+'개';
+    document.getElementById('rs-pend').textContent= pend+'개';
+  }
 
   if(!isSurvey) {
     setTimeout(()=>{ document.getElementById('score-circle').style.strokeDashoffset=351.9*(1-score/totalScore); },100);
@@ -2933,6 +3014,7 @@ async function loadExamsFromDB() {
       shuffleQ: e.shuffle_questions,
       status: e.status,
       roster: e.roster || [],
+      thankMsg: e.thank_msg || '',
       questions: questionsData
         .filter(q => q.exam_id === e.id)
         .sort((a, b) => a.sort_order - b.sort_order)
@@ -3018,6 +3100,7 @@ async function saveItemToDB(item) {
       shuffle_questions: item.shuffleQ,
       status: item.status,
       roster: item.roster || [],
+      thank_msg: item.thankMsg || null,
     });
 
     // 기존 문항 삭제 후 재저장
