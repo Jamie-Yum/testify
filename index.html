@@ -2049,11 +2049,20 @@ function qItemHTML(q, i, mode) {
         <input class="fi fi-sm fi-inline" type="number" value="${q.score||10}" style="width:70px;" onchange="updateQ('${q.id}','score',+this.value)"/>
         <span style="font-size:13px;color:var(--muted);">점</span>
       </div>
-      <button class="btn btn-xs btn-danger" onclick="deleteQ('${q.id}')">삭제</button>
+      <div class="flex gap-8 items-center">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer;">
+          <button class="tgl ${q.fixedOrder?'on':''}" onclick="toggleFixed('${q.id}',this)"></button>
+          순서 고정 🔒
+        </label>
+        <button class="btn btn-xs btn-danger" onclick="deleteQ('${q.id}')">삭제</button>
+      </div>
     </div>`;
   } else {
     body+=`<div class="flex justify-between items-center mt-12">
-      <span></span>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer;">
+        <button class="tgl ${q.fixedOrder?'on':''}" onclick="toggleFixed('${q.id}',this)"></button>
+        순서 고정 🔒
+      </label>
       <button class="btn btn-xs btn-danger" onclick="deleteQ('${q.id}')">삭제</button>
     </div>`;
   }
@@ -2064,6 +2073,7 @@ function qItemHTML(q, i, mode) {
       <div class="q-num-b">${i+1}</div>
       <div class="q-preview">${q.text||'(문제를 입력하세요)'}</div>
       <span class="q-type-tag">${typeLabel}</span>
+      ${q.fixedOrder ? `<span style="font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(240,160,96,.15);color:var(--accent4);font-weight:700;">🔒 고정</span>` : ''}
       ${mode==='exam'?`<span class="q-score-tag">${q.score||10}점</span>`:''}
       <span class="q-chevron">▾</span>
     </div>
@@ -2076,7 +2086,8 @@ function addQ(type) {
   const q = { id:++nextQId, type, text:'', score:10,
     options: type==='multiple'?['','','','']:undefined,
     answer: type==='ox'?'O':type==='multiple'?'0':'',
-    modelAnswer:'', explanation:'', scaleMin:'전혀 아니다', scaleMax:'매우 그렇다' };
+    modelAnswer:'', explanation:'', scaleMin:'전혀 아니다', scaleMax:'매우 그렇다',
+    fixedOrder: false };
   item.questions.push(q);
   save();
   renderQList(item.questions, item.mode);
@@ -2094,6 +2105,12 @@ function updateOpt(qid,oi,val) {
 function setAnswer(qid,oi,el) {
   updateQ(qid,'answer',String(oi));
   el.closest('.options-editor').querySelectorAll('.opt-label').forEach((l,i)=>l.classList.toggle('correct',i===oi));
+}
+function toggleFixed(qid, btn) {
+  btn.classList.toggle('on');
+  const isFixed = btn.classList.contains('on');
+  updateQ(qid, 'fixedOrder', isFixed);
+  reRenderQ();
 }
 function reRenderQ() {
   const item=getCurrent(); renderQList(item.questions,item.mode);
@@ -2823,6 +2840,28 @@ function startExam() {
   currentQ = 0; answers = {}; tabWarnCount = 0;
   timeLeft = activeItem.time * 60;
 
+  // 문제 순서 셔플 (고정 문항 제외)
+  if (activeItem.shuffleQ) {
+    const qs = activeItem.questions;
+    // 고정 문항의 인덱스와 내용 기억
+    const fixedMap = {};
+    qs.forEach((q, i) => { if (q.fixedOrder) fixedMap[i] = q; });
+    // 비고정 문항만 추출해서 섞기
+    const freeQs = qs.filter(q => !q.fixedOrder);
+    for (let i = freeQs.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [freeQs[i], freeQs[j]] = [freeQs[j], freeQs[i]];
+    }
+    // 고정 위치 유지하며 재조합
+    const shuffled = [];
+    let freeIdx = 0;
+    for (let i = 0; i < qs.length; i++) {
+      if (fixedMap[i]) shuffled.push(fixedMap[i]);
+      else shuffled.push(freeQs[freeIdx++]);
+    }
+    activeItem.questions = shuffled;
+  }
+
   // 보기 셔플
   shuffledOpts = {};
   if (activeItem.shuffleOpts) {
@@ -3208,6 +3247,7 @@ async function loadExamsFromDB() {
           modelAnswer: q.model_answer || '',
           score: q.score || 10,
           explanation: q.explanation || '',
+          fixedOrder: q.fixed_order || false,
         }))
     }));
 
@@ -3298,6 +3338,7 @@ async function saveItemToDB(item) {
         model_answer: q.modelAnswer || null,
         score: q.score || 10,
         explanation: q.explanation || null,
+        fixed_order: q.fixedOrder || false,
       });
     }
     console.log('✅ 시험 저장 완료:', item.title);
